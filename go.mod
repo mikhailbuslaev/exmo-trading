@@ -2,6 +2,4 @@ module mikhailbuslaev/exmo
 
 go 1.17
 
-require (
-
-)
+require gopkg.in/yaml.v2 v2.4.0

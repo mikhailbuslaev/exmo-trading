@@ -12,16 +12,10 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+	. "mikhailbuslaev/exmo/app/types"
 )
 
-type Response map[string]interface{}
-type ReqestParams map[string]string
-type User struct {
-	PublicKey 	string
-	SecretKey	string
-}
-
-func Post(method string, params ReqestParams, u *User) (Response, error) {
+func Do(method string, params ReqestParams, u *User) (Response, error) {
 
 	post_params := url.Values{}
 	post_params.Add("nonce", nonce())
