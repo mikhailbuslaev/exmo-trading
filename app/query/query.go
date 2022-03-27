@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	. "mikhailbuslaev/exmo/app/types"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-	. "mikhailbuslaev/exmo/app/types"
 )
 
 func Do(method string, params ReqestParams, u *User) (Response, error) {

@@ -2,47 +2,51 @@ package utils
 
 import (
 	"fmt"
-	"os"
 	"io/ioutil"
-	"gopkg.in/yaml.v2"
 	. "mikhailbuslaev/exmo/app/types"
+	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 func PrintResponse(resp map[string]interface{}, err error) {
 	if err != nil {
-		fmt.Println(resp)
-	} else {
 		fmt.Println("Error while do request")
+	} else {
+		fmt.Println(resp)
 	}
 }
 
-func RecordLog(data []byte) {
+func Record(data []byte, way string) {
 
-	file, err := os.OpenFile("logs/test.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        fmt.Println("Error while writing logs")
-    }
-	
-	
-   _, err3 := file.Write(data) 
-    if err3 != nil {
+	file, err := os.OpenFile(way, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
 		fmt.Println("Error while writing logs")
-    }
+	}
 
+	_, err = file.Write(data)
+	if err != nil {
+		fmt.Println("Error while writing logs")
+	}
+
+	_, err = file.Write([]byte("\n"))
+	if err != nil {
+		fmt.Println("Error while writing logs")
+	}
 	file.Close()
 }
 
-func LoadUser() *User{
-	var user *User
+func LoadUser() *User {
+	user := &User{}
 	file, err := ioutil.ReadFile("configs/user-config.yaml")
-    if err != nil {
-        fmt.Println("Error while open user-config.yaml")
-    }
+	if err != nil {
+		fmt.Println("Error while open user-config.yaml")
+	}
 
 	err = yaml.Unmarshal(file, user)
-    if err != nil {
-        fmt.Println("Error while unmarshalling user-config.yaml")
-    }
+	if err != nil {
+		fmt.Println("Error while unmarshalling user-config.yaml")
+	}
 
-    return user
+	return user
 }
