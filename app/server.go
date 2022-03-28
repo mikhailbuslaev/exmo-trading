@@ -24,6 +24,7 @@ func ListenHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Log encoding fail")
 	}
+	utils.RecordNewLine("logs/test.log")
 	utils.Record(jsonresp, "logs/test.log")
 
 }

@@ -19,21 +19,44 @@ func PrintResponse(resp map[string]interface{}, err error) {
 
 func Record(data []byte, way string) {
 
-	file, err := os.OpenFile(way, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(way, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
 		fmt.Println("Error while writing logs")
 	}
-
+	defer file.Close()
 	_, err = file.Write(data)
 	if err != nil {
 		fmt.Println("Error while writing logs")
 	}
+}
 
+func RecordNewLine(way string) {
+	file, err := os.OpenFile(way, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+		fmt.Println("Error while writing logs")
+	}
+	defer file.Close()
 	_, err = file.Write([]byte("\n"))
 	if err != nil {
 		fmt.Println("Error while writing logs")
 	}
-	file.Close()
+}
+
+
+func Rewrite(data []byte, way string) {
+	err := os.Truncate(way, 0)
+	if err != nil {
+		fmt.Println("Error while cleaning file")
+	}
+	file, err := os.OpenFile(way, os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+		fmt.Println("Error while open file")
+	}
+	defer file.Close()
+	_, err = file.Write(data)
+	if err != nil {
+		fmt.Println("Error while rewriting file")
+	}
 }
 
 func LoadUser() *User {
