@@ -1,4 +1,4 @@
-package candles
+package data
 
 import (
 	"encoding/json"
@@ -21,54 +21,12 @@ type Candle struct {
 }
 
 type Data interface {
-	ParseJsonFile(fileName string) error
-	ParseJson(buf []byte) error
-	AppendJsonFile(fileName string) error
-	RewriteJsonFile(fileName string) error
-	MakeJson() ([]byte, error)
+	Marshal() ([]byte, error)
+	Unmarshal(buf []byte) error
+	Append(candles *Candles)
 }
 
-func (c *Candle) MakeJson() ([]byte, error) {
-	b, err := json.Marshal(c)
-	if err != nil {
-		fmt.Println("Fail while convering struct to json")
-	}
-	return b, err
-}
-
-func (c *Candles) MakeJson() ([]byte, error) {
-	b, err := json.Marshal(&c.Array)
-	if err != nil {
-		fmt.Println("Fail while convering struct to json")
-	}
-	return b, err
-}
-
-func (c *Candle) ParseJsonFile(fileName string) error {
-	buf, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Println("Unable to read json file with candle")
-	}
-	err = json.Unmarshal(buf, c)
-	if err != nil {
-		fmt.Println("Unable to unmarshal json file with candle")
-	}
-	return err
-}
-
-func (c *Candles) ParseJsonFile(fileName string) error {
-	buf, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Println("Unable to read json file with candles")
-	}
-	err = json.Unmarshal(buf, &c.Array)
-	if err != nil {
-		fmt.Println("Unable to unmarshal json file with candles")
-	}
-	return err
-}
-
-func (c *Candle) ParseJson(buf []byte) error {
+func (c *Candle) Unmarshal(buf []byte) error {
 	err := json.Unmarshal(buf, c)
 	if err != nil {
 		fmt.Println("Unable to unmarshal json with candle")
@@ -76,7 +34,19 @@ func (c *Candle) ParseJson(buf []byte) error {
 	return err
 }
 
-func (c *Candles) ParseJson(buf []byte) error {
+func (c *Candle) Marshal() ([]byte, error) {
+	b, err := json.Marshal(c)
+	if err != nil {
+		fmt.Println("Fail while converting struct to json")
+	}
+	return b, err
+}
+
+func (c *Candle) Append(candles *Candles) {
+	candles.Array = append(candles.Array, *c)
+}
+
+func (c *Candles) Unmarshal(buf []byte) error {
 	err := json.Unmarshal(buf, &c.Array)
 	if err != nil {
 		fmt.Println("Unable to unmarshal json with candles")
@@ -84,86 +54,59 @@ func (c *Candles) ParseJson(buf []byte) error {
 	return err
 }
 
-func (c *Candles) RewriteJsonFile(fileName string) error {
-
-	err := os.Truncate(fileName, 0)
+func (c *Candles) Marshal() ([]byte, error) {
+	b, err := json.Marshal(&c.Array)
 	if err != nil {
-		fmt.Println("Unable to clear json file")
+		fmt.Println("Fail while converting struct to json")
 	}
-
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
-	if err != nil {
-		fmt.Println("Unable to open json file")
-	}
-
-	data, err := c.MakeJson()
-
-	_, err1 := f.Write(data)
-	if err1 != nil {
-		fmt.Println("Unable to write data into json file")
-	}
-
-	f.Close()
-	return err
+	return b, err
 }
 
-func (c *Candle) RewriteJsonFile(fileName string) error {
-
-	err := os.Truncate(fileName, 0)
-	if err != nil {
-		fmt.Println("Unable to clear json file")
-	}
-
-	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
-	if err != nil {
-		fmt.Println("Unable to open json file")
-	}
-
-	data, err := c.MakeJson()
-
-	_, err1 := f.Write(data)
-	if err1 != nil {
-		fmt.Println("Unable to write data into json file")
-	}
-
-	f.Close()
-	return err
-}
-
-func (c *Candle) AppendJsonFile(fileName string) error {
-	candles := &Candles{}
-	err := candles.ParseJsonFile(fileName)
-	candles.Array = append(candles.Array, *c)
-	err = candles.RewriteJsonFile(fileName)
-	return err
-}
-
-func (c *Candles) AppendJsonFile(fileName string) error {
-	candles := &Candles{}
-	err := candles.ParseJsonFile(fileName)
+func (c *Candles) Append(candles *Candles) {
 	for i := range c.Array {
 		candles.Array = append(candles.Array, c.Array[i])
 	}
-	err = candles.RewriteJsonFile(fileName)
+}
+
+func ParseJsonFile(d Data, fileName string) error {
+	buf, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		fmt.Println("Unable to read json file")
+	}
+	err = d.Unmarshal(buf)
+	if err != nil {
+		fmt.Println("Unable to unmarshal json file")
+	}
 	return err
 }
 
-func AppendToFile(d Data, fileName string) {
-	fmt.Println(d.AppendJsonFile(fileName))
+func RewriteJsonFile(d Data, fileName string) error {
+
+	err := os.Truncate(fileName, 0)
+	if err != nil {
+		fmt.Println("Unable to clear json file")
+	}
+
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
+	if err != nil {
+		fmt.Println("Unable to open json file")
+	}
+
+	data, err := d.Marshal()
+
+	_, err1 := f.Write(data)
+	if err1 != nil {
+		fmt.Println("Unable to write data into json file")
+	}
+
+	f.Close()
+	return err
 }
 
-func RewriteFile(d Data, fileName string) {
-	fmt.Println(d.RewriteJsonFile(fileName))
-}
-
-func ParseFile(d Data, fileName string) {
-	fmt.Println(d.ParseJsonFile(fileName))
-}
-
-func ParseJson(d Data, buf []byte) {
-	fmt.Println(d.ParseJson(buf))
-}
-
-func MakeJson(d Data) ([]byte, error) {
-	return d.MakeJson()
+func AppendJsonFile(d Data, fileName string) error {
+	candles := &Candles{}
+	err := ParseJsonFile(d, fileName)
+	d.Append(candles)
+	err = RewriteJsonFile(candles, fileName)
+	return err
 }
