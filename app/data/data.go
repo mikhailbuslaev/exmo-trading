@@ -20,10 +20,20 @@ type Candle struct {
 	Volume float64
 }
 
+type Decisions struct {
+	Array []Decision
+}
+
+type Decision struct {
+	Time    int64
+	Thought string
+}
+
 type Data interface {
 	Marshal() ([]byte, error)
 	Unmarshal(buf []byte) error
-	Append(candles *Candles)
+	AppendToCandles(c *Candles)
+	AppendToDecisions(d *Decisions)
 }
 
 func (c *Candle) Unmarshal(buf []byte) error {
@@ -42,8 +52,12 @@ func (c *Candle) Marshal() ([]byte, error) {
 	return b, err
 }
 
-func (c *Candle) Append(candles *Candles) {
+func (c *Candle) AppendToCandles(candles *Candles) {
 	candles.Array = append(candles.Array, *c)
+}
+
+func (d *Candle) AppendToDecisions(decisions *Decisions) {
+	fmt.Println("Forbidden method")
 }
 
 func (c *Candles) Unmarshal(buf []byte) error {
@@ -55,17 +69,71 @@ func (c *Candles) Unmarshal(buf []byte) error {
 }
 
 func (c *Candles) Marshal() ([]byte, error) {
-	b, err := json.Marshal(&c.Array)
+	b, err := json.Marshal(c.Array)
 	if err != nil {
 		fmt.Println("Fail while converting struct to json")
 	}
 	return b, err
 }
 
-func (c *Candles) Append(candles *Candles) {
+func (c *Candles) AppendToCandles(candles *Candles) {
 	for i := range c.Array {
 		candles.Array = append(candles.Array, c.Array[i])
 	}
+}
+
+func (c *Candles) AppendToDecisions(decisions *Decisions) {
+	fmt.Println("Forbidden method")
+}
+
+func (d *Decision) Unmarshal(buf []byte) error {
+	err := json.Unmarshal(buf, d)
+	if err != nil {
+		fmt.Println("Unable to unmarshal json with decision")
+	}
+	return err
+}
+
+func (d *Decision) Marshal() ([]byte, error) {
+	b, err := json.Marshal(d)
+	if err != nil {
+		fmt.Println("Fail while converting struct to json")
+	}
+	return b, err
+}
+
+func (d *Decision) AppendToDecisions(decisions *Decisions) {
+	decisions.Array = append(decisions.Array, *d)
+}
+
+func (d *Decision) AppendToCandles(decisions *Decisions) {
+	fmt.Println("Forbidden method")
+}
+
+func (d *Decisions) Unmarshal(buf []byte) error {
+	err := json.Unmarshal(buf, &d.Array)
+	if err != nil {
+		fmt.Println("Unable to unmarshal json with decision")
+	}
+	return err
+}
+
+func (d *Decisions) Marshal() ([]byte, error) {
+	b, err := json.Marshal(d.Array)
+	if err != nil {
+		fmt.Println("Fail while converting struct to json")
+	}
+	return b, err
+}
+
+func (d *Decisions) AppendToDecisions(decisions *Decisions) {
+	for i := range d.Array {
+		decisions.Array = append(decisions.Array, d.Array[i])
+	}
+}
+
+func (d *Decisions) AppendToCandles(candles *Candles) {
+	fmt.Println("Forbidden method")
 }
 
 func ParseJsonFile(d Data, fileName string) error {
@@ -103,10 +171,18 @@ func RewriteJsonFile(d Data, fileName string) error {
 	return err
 }
 
-func AppendJsonFile(d Data, fileName string) error {
-	candles := &Candles{}
-	err := ParseJsonFile(d, fileName)
-	d.Append(candles)
-	err = RewriteJsonFile(candles, fileName)
-	return err
+func AppendJsonFile(d Data, fileName string, flag string) error {
+	if flag == "candles" {
+		output := &Candles{}
+		err := ParseJsonFile(d, fileName)
+		d.AppendToCandles(output)
+		err = RewriteJsonFile(output, fileName)
+		return err
+	} else {
+		output := &Decisions{}
+		err := ParseJsonFile(output, fileName)
+		d.AppendToDecisions(output)
+		err = RewriteJsonFile(output, fileName)
+		return err
+	}
 }
