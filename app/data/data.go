@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -167,6 +168,19 @@ func (c *Candle) Write(fileName string) error {
 	err = w.Write(c.MakeString())
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (c *Candles) ScanRows(rows *sql.Rows) error {
+	i := 0
+	for rows.Next() {
+		err := rows.Scan(&c.Array[i].Time, &c.Array[i].Open,
+			&c.Array[i].Close, &c.Array[i].High, &c.Array[i].Low, &c.Array[i].Volume)
+		if err != nil {
+			return err
+		}
+		i++
 	}
 	return nil
 }
