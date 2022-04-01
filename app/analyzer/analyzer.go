@@ -4,6 +4,10 @@ import (
 	"exmo-trading/app/data"
 )
 
+type MAintersection struct {
+	Name string
+}
+
 func Solve() {
 	candles := &data.Candles{}
 	_ = data.ParseJsonFile(candles, "dd.json")

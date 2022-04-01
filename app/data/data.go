@@ -1,10 +1,10 @@
 package data
 
 import (
-	"encoding/json"
+	"encoding/csv"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"strconv"
 )
 
 type Candles struct {
@@ -20,169 +20,154 @@ type Candle struct {
 	Volume float64
 }
 
-type Decisions struct {
-	Array []Decision
-}
-
-type Decision struct {
-	Time    int64
-	Thought string
-}
-
 type Data interface {
-	Marshal() ([]byte, error)
-	Unmarshal(buf []byte) error
-	AppendToCandles(c *Candles)
-	AppendToDecisions(d *Decisions)
+	Read(string) error
+	Write(string) error
 }
 
-func (c *Candle) Unmarshal(buf []byte) error {
-	err := json.Unmarshal(buf, c)
+func (c *Candle) ParseString(input []string) error {
+	var err error
+	c.Time, err = strconv.ParseInt(input[0], 10, 64)
 	if err != nil {
-		fmt.Println("Unable to unmarshal json with candle")
+		return err
 	}
-	return err
-}
-
-func (c *Candle) Marshal() ([]byte, error) {
-	b, err := json.Marshal(c)
+	c.Open, err = strconv.ParseFloat(input[1], 64)
 	if err != nil {
-		fmt.Println("Fail while converting struct to json")
+		return err
 	}
-	return b, err
-}
-
-func (c *Candle) AppendToCandles(candles *Candles) {
-	candles.Array = append(candles.Array, *c)
-}
-
-func (d *Candle) AppendToDecisions(decisions *Decisions) {
-	fmt.Println("Forbidden method")
-}
-
-func (c *Candles) Unmarshal(buf []byte) error {
-	err := json.Unmarshal(buf, &c.Array)
+	c.Close, err = strconv.ParseFloat(input[2], 64)
 	if err != nil {
-		fmt.Println("Unable to unmarshal json with candles")
+		return err
 	}
-	return err
-}
-
-func (c *Candles) Marshal() ([]byte, error) {
-	b, err := json.Marshal(c.Array)
+	c.High, err = strconv.ParseFloat(input[3], 64)
 	if err != nil {
-		fmt.Println("Fail while converting struct to json")
+		return err
 	}
-	return b, err
+	c.Low, err = strconv.ParseFloat(input[4], 64)
+	if err != nil {
+		return err
+	}
+	c.Volume, err = strconv.ParseFloat(input[5], 64)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (c *Candles) AppendToCandles(candles *Candles) {
+func (c *Candle) MakeString() []string {
+	output := make([]string, 6)
+	output[0] = fmt.Sprintf("%d", c.Time)
+	output[1] = fmt.Sprintf("%f", c.Open)
+	output[2] = fmt.Sprintf("%f", c.Close)
+	output[3] = fmt.Sprintf("%f", c.High)
+	output[4] = fmt.Sprintf("%f", c.Low)
+	output[5] = fmt.Sprintf("%f", c.Volume)
+	return output
+}
+
+func (c *Candles) Read(fileName string) error {
+
+	f, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+	r := csv.NewReader(f)
+
+	records, err := r.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	for i := range records {
+		err := c.Array[i].ParseString(records[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Candle) Read(fileName string) error {
+
+	f, err := os.OpenFile(fileName, os.O_RDONLY|os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+	r := csv.NewReader(f)
+
+	record, err := r.Read()
+	if err != nil {
+		return err
+	}
+	err = c.ParseString(record)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Candles) Write(fileName string) error {
+
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	w := csv.NewWriter(f)
+
+	defer w.Flush()
+
 	for i := range c.Array {
-		candles.Array = append(candles.Array, c.Array[i])
+		err := w.Write(c.Array[i].MakeString())
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (c *Candles) AppendToDecisions(decisions *Decisions) {
-	fmt.Println("Forbidden method")
-}
+func (c *Candle) Write(fileName string) error {
 
-func (d *Decision) Unmarshal(buf []byte) error {
-	err := json.Unmarshal(buf, d)
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
-		fmt.Println("Unable to unmarshal json with decision")
+		return err
 	}
-	return err
-}
 
-func (d *Decision) Marshal() ([]byte, error) {
-	b, err := json.Marshal(d)
+	defer f.Close()
+
+	w := csv.NewWriter(f)
+
+	defer w.Flush()
+
+	err = w.Write(c.MakeString())
 	if err != nil {
-		fmt.Println("Fail while converting struct to json")
+		return err
 	}
-	return b, err
+	return nil
 }
 
-func (d *Decision) AppendToDecisions(decisions *Decisions) {
-	decisions.Array = append(decisions.Array, *d)
-}
-
-func (d *Decision) AppendToCandles(decisions *Decisions) {
-	fmt.Println("Forbidden method")
-}
-
-func (d *Decisions) Unmarshal(buf []byte) error {
-	err := json.Unmarshal(buf, &d.Array)
-	if err != nil {
-		fmt.Println("Unable to unmarshal json with decision")
-	}
-	return err
-}
-
-func (d *Decisions) Marshal() ([]byte, error) {
-	b, err := json.Marshal(d.Array)
-	if err != nil {
-		fmt.Println("Fail while converting struct to json")
-	}
-	return b, err
-}
-
-func (d *Decisions) AppendToDecisions(decisions *Decisions) {
-	for i := range d.Array {
-		decisions.Array = append(decisions.Array, d.Array[i])
-	}
-}
-
-func (d *Decisions) AppendToCandles(candles *Candles) {
-	fmt.Println("Forbidden method")
-}
-
-func ParseJsonFile(d Data, fileName string) error {
-	buf, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Println("Unable to read json file")
-	}
-	err = d.Unmarshal(buf)
-	if err != nil {
-		fmt.Println("Unable to unmarshal json file")
-	}
-	return err
-}
-
-func RewriteJsonFile(d Data, fileName string) error {
-
-	err := os.Truncate(fileName, 0)
-	if err != nil {
-		fmt.Println("Unable to clear json file")
-	}
-
+func Rewrite(d Data, fileName string) error {
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
-		fmt.Println("Unable to open json file")
-	}
-
-	data, err := d.Marshal()
-
-	_, err1 := f.Write(data)
-	if err1 != nil {
-		fmt.Println("Unable to write data into json file")
-	}
-
-	f.Close()
-	return err
-}
-
-func AppendJsonFile(d Data, fileName string, flag string) error {
-	if flag == "candles" {
-		output := &Candles{}
-		err := ParseJsonFile(d, fileName)
-		d.AppendToCandles(output)
-		err = RewriteJsonFile(output, fileName)
-		return err
-	} else {
-		output := &Decisions{}
-		err := ParseJsonFile(output, fileName)
-		d.AppendToDecisions(output)
-		err = RewriteJsonFile(output, fileName)
 		return err
 	}
+
+	defer f.Close()
+	err = f.Truncate(0)
+	if err != nil {
+		return err
+	}
+
+	err = d.Write(fileName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
