@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,10 +17,8 @@ type User struct {
 	SecretKey string
 }
 
-type Response map[string]interface{}
-
 type Query interface {
-	Do() (*Response, error)
+	Do() (*http.Response, error)
 }
 
 type PostQuery struct {
@@ -55,7 +50,7 @@ func (q *PostQuery) GetSign() {
 	q.Sign = fmt.Sprintf("%x", mac.Sum(nil))
 }
 
-func (q *PostQuery) Do() (*Response, error) {
+func (q *PostQuery) Do() (*http.Response, error) {
 
 	q.PrepareParams()
 	q.GetSign()
@@ -73,45 +68,21 @@ func (q *PostQuery) Do() (*Response, error) {
 	}
 	defer resp.Body.Close()
 
-	return ReturnResponse(resp)
+	return resp, nil
 }
 
-func (q *GetQuery) Do() (*Response, error) {
+func (q *GetQuery) Do() (*http.Response, error) {
 
-	resp, err := http.Get(q.Method)
+	resp, err := http.Get("https://api.exmo.me/v1/" + q.Method)
 	if err != nil {
 		return nil, err
 	}
 
 	defer resp.Body.Close()
 
-	return ReturnResponse(resp)
+	return resp, nil
 }
 
-func ReturnResponse(resp *http.Response) (*Response, error) {
-	if resp.Status != "200 OK" {
-		return nil, errors.New("http status: " + resp.Status)
-	}
-
-	body, err1 := ioutil.ReadAll(resp.Body)
-	if err1 != nil {
-		return nil, err1
-	}
-
-	var dat map[string]interface{}
-	err2 := json.Unmarshal([]byte(body), &dat)
-	if err2 != nil {
-		return nil, err2
-	}
-
-	if result, ok := dat["result"]; ok && !result.(bool) {
-		return nil, errors.New(dat["error"].(string))
-	}
-	r := Response{}
-	r = dat
-	return &r, nil
-}
-
-func Exec(q Query) (*Response, error) {
+func Exec(q Query) (*http.Response, error) {
 	return q.Do()
 }

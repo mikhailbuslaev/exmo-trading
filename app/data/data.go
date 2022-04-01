@@ -2,27 +2,45 @@ package data
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 )
 
 type Candles struct {
-	Array []Candle
+	Array []Candle `json:"candles"`
 }
 
 type Candle struct {
-	Time   int64
-	Open   float64
-	Close  float64
-	High   float64
-	Low    float64
-	Volume float64
+	Time   int64   `json:"t"`
+	Open   float64 `json:"o"`
+	Close  float64 `json:"c"`
+	High   float64 `json:"h"`
+	Low    float64 `json:"l"`
+	Volume float64 `json:"v"`
 }
 
 type Data interface {
+	ParseJson([]byte) error
 	Read(string) error
 	Write(string) error
+}
+
+func (c *Candle) ParseJson(buf []byte) error {
+	err := json.Unmarshal(buf, c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Candles) ParseJson(buf []byte) error {
+	err := json.Unmarshal(buf, &c.Array)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *Candle) ParseString(input []string) error {
