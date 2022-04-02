@@ -55,13 +55,14 @@ func (q *PostQuery) Do() (*http.Response, error) {
 	q.PrepareParams()
 	q.GetSign()
 
+	client := &http.Client{}
 	req, _ := http.NewRequest("POST", "https://api.exmo.me/v1/"+q.Method, bytes.NewBuffer([]byte(q.PreparedParams)))
 	req.Header.Set("Key", q.UserParams.PublicKey)
 	req.Header.Set("Sign", q.Sign)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(q.PreparedParams)))
+	req.Close = true
 
-	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -72,13 +73,11 @@ func (q *PostQuery) Do() (*http.Response, error) {
 }
 
 func (q *GetQuery) Do() (*http.Response, error) {
-
+	fmt.Println("https://api.exmo.me/v1/" + q.Method)
 	resp, err := http.Get("https://api.exmo.me/v1/" + q.Method)
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	return resp, nil
 }

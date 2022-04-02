@@ -37,8 +37,9 @@ func (c *Candle) ParseJson(buf []byte) error {
 }
 
 func (c *Candles) ParseJson(buf []byte) error {
-	err := json.Unmarshal(buf, &c.Array)
+	err := json.Unmarshal(buf, c)
 	if err != nil {
+		fmt.Println("json parsing fail")
 		return err
 	}
 	return nil
