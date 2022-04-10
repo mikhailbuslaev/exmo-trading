@@ -116,7 +116,7 @@ func (o *Order) ParseString(input []string) error {
 }
 
 func (o *Order) MakeString() []string {
-	output := make([]string, 6)
+	output := make([]string, 3)
 	output[0] = o.Action
 	output[1] = fmt.Sprintf("%f", o.Price)
 	output[2] = fmt.Sprintf("%d", o.Time)

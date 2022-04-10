@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -23,11 +24,12 @@ type Context struct {
 	CandlesVolume int64  `json:"candles-volume"`
 }
 
-func (h *Handler) Set() {
+func (h *Handler) Set(candlesFile string) {
 	h.Context.Symbol = "BTC_USD"
 	h.Context.Resolution = 5
-	h.Context.CandlesFile = "cache/5min-candles.csv"
+	h.Context.CandlesFile = candlesFile
 	h.Context.DbTable = "5min-candles"
+	h.Context.CandlesVolume = 250
 }
 
 func (h *Handler) LoadCandles(from, to string) error {
@@ -155,14 +157,20 @@ func (h *Handler) SyncDbAndCache(dbConfigName string) error {
 }
 
 func main() {
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	parent := filepath.Dir(filepath.Dir(wd))
+
 	fivemin := &Handler{}
-	fivemin.Set()
+	fivemin.Set(parent + "/cache/5min-candles.csv")
 	for {
 		err := fivemin.InitCandles()
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("waiting new candles")
-		time.Sleep(30 * time.Second)
+		time.Sleep(60 * time.Second)
 	}
 }

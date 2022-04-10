@@ -20,10 +20,10 @@ func GetMA(array []float64, frame int) []float64 {
 
 func CountAvgChanges(array []float64, frame int) ([]float64, []float64) {
 	length := len(array)
-	avggain := make([]float64, 0, length)
-	avglose := make([]float64, 0, length)
+	avggain := make([]float64, length)
+	avglose := make([]float64, length)
 
-	for i := frame; i < length; i++ {
+	for i := frame + 1; i < length; i++ {
 		n, m := 0, 0
 		avggain[i], avglose[i] = 0.00, 0.00
 		loses, gains := 0.00, 0.00
@@ -32,18 +32,18 @@ func CountAvgChanges(array []float64, frame int) ([]float64, []float64) {
 				loses = loses + (array[j-1]-array[j])/array[j-1]
 				n++
 			}
-			if array[i] > array[i-1] {
+			if array[j] > array[j-1] {
 				gains = gains + (array[j]-array[j-1])/array[j-1]
 				m++
 			}
 		}
 
 		if m != 0 {
-			avggain[i] = gains / float64(m)
+			avggain[i] = 100 * gains / float64(m)
 		}
 
 		if n != 0 {
-			avglose[i] = loses / float64(n)
+			avglose[i] = 100 * loses / float64(n)
 		}
 	}
 	return avggain, avglose
