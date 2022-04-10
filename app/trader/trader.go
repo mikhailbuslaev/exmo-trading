@@ -1,4 +1,4 @@
-package trader
+package main
 
 import (
 	"exmo-trading/app/data"
@@ -28,11 +28,14 @@ func ExecOrder(o *data.Order) {
 	o.Write("cache/5min-orders.csv")
 }
 
-func Launch() {
-	m := &strategies.MAintersectionTrader{}
-	m.Set()
+func main() {
+	ma := &strategies.MAintersectionTrader{}
+	ma.Set()
+	rsi := &strategies.RSItrader{}
+	rsi.Set()
 	for {
-		Trade(m)
+		Trade(ma)
+		Trade(rsi)
 		time.Sleep(30 * time.Second)
 	}
 }

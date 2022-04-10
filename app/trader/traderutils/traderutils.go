@@ -10,12 +10,43 @@ func GetMA(array []float64, frame int) []float64 {
 	ma := make([]float64, length)
 	for i := frame; i < length; i++ {
 		sum := 0.00
-		for j := i - frame; j < i; j++ {
+		for j := i - frame; j <= i; j++ {
 			sum = sum + array[j]
 		}
 		ma[i] = sum / float64(frame)
 	}
 	return ma
+}
+
+func CountAvgChanges(array []float64, frame int) ([]float64, []float64) {
+	length := len(array)
+	avggain := make([]float64, 0, length)
+	avglose := make([]float64, 0, length)
+
+	for i := frame; i < length; i++ {
+		n, m := 0, 0
+		avggain[i], avglose[i] = 0.00, 0.00
+		loses, gains := 0.00, 0.00
+		for j := i - frame; j <= i; j++ {
+			if array[j] < array[j-1] {
+				loses = loses + (array[j-1]-array[j])/array[j-1]
+				n++
+			}
+			if array[i] > array[i-1] {
+				gains = gains + (array[j]-array[j-1])/array[j-1]
+				m++
+			}
+		}
+
+		if m != 0 {
+			avggain[i] = gains / float64(m)
+		}
+
+		if n != 0 {
+			avglose[i] = loses / float64(n)
+		}
+	}
+	return avggain, avglose
 }
 
 func CheckActuality(input int64) bool {

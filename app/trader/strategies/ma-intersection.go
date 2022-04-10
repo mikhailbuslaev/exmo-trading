@@ -17,21 +17,18 @@ func (m *MAintersectionTrader) Set() {
 	m.ShortMAFrame = 50
 }
 
-func (m *MAintersectionTrader) Prepare(c *data.Candles, mashort, malong []float64) *data.Order {
-
+func (m *MAintersectionTrader) Solve(c *data.Candles, mashort, malong []float64) *data.Order {
 	length := len(mashort)
-	for i := m.LongMAFrame + 1; i < length; i++ {
-		if mashort[i] > malong[i] && malong[i-1] > mashort[i-1] {
-			if traderutils.CheckActuality(c.Array[i].Time / 1000) {
-				order := traderutils.MakeOrder("buy", c.Array[i].Close, c.Array[i].Time/1000)
-				return order
-			}
+	if mashort[length] > malong[length] && malong[length-1] > mashort[length-1] {
+		if traderutils.CheckActuality(c.Array[length].Time / 1000) {
+			order := traderutils.MakeOrder("long", c.Array[length].Close, c.Array[length].Time/1000)
+			return order
 		}
-		if mashort[i] < malong[i] && malong[i-1] < mashort[i-1] {
-			if traderutils.CheckActuality(c.Array[i].Time / 1000) {
-				order := traderutils.MakeOrder("sell", c.Array[i].Close, c.Array[i].Time/1000)
-				return order
-			}
+	}
+	if mashort[length] < malong[length] && malong[length-1] < mashort[length-1] {
+		if traderutils.CheckActuality(c.Array[length].Time / 1000) {
+			order := traderutils.MakeOrder("long", c.Array[length].Close, c.Array[length].Time/1000)
+			return order
 		}
 	}
 	return nil
@@ -49,5 +46,5 @@ func (m *MAintersectionTrader) Analyze() (*data.Order, error) {
 	priceArray := traderutils.GetArrayFromCandles(candles)
 	malong := traderutils.GetMA(priceArray, m.LongMAFrame)
 	mashort := traderutils.GetMA(priceArray, m.ShortMAFrame)
-	return m.Prepare(candles, mashort, malong), nil
+	return m.Solve(candles, mashort, malong), nil
 }

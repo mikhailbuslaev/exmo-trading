@@ -1,4 +1,4 @@
-package dataserver
+package main
 
 import (
 	"errors"
@@ -154,7 +154,7 @@ func (h *Handler) SyncDbAndCache(dbConfigName string) error {
 	return nil
 }
 
-func Launch() {
+func main() {
 	fivemin := &Handler{}
 	fivemin.Set()
 	for {
@@ -162,8 +162,7 @@ func Launch() {
 		if err != nil {
 			fmt.Println(err)
 		}
-
 		fmt.Println("waiting new candles")
-		time.Sleep(60 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 }
