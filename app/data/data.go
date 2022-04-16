@@ -27,10 +27,11 @@ type Orders struct {
 }
 
 type Order struct {
-	Id     int64   `json:"i"`
-	Action string  `json:"a"`
-	Time   int64   `json:"t"`
-	Price  float64 `json:"p"`
+	Id     int64   `json:"id"`
+	Action string  `json:"action"`
+	Price  float64 `json:"price"`
+	StopLimit float64 `json:"stoplimit"`
+	Status string `json:"status"`
 }
 
 type Data interface {
@@ -104,19 +105,20 @@ func (c *Candle) ParseString(input []string) error {
 
 func (o *Order) ParseString(input []string) error {
 	var err error
-	o.Time, err = strconv.ParseInt(input[0], 10, 64)
+	o.Id, err = strconv.ParseInt(input[0], 10, 64)
 	if err != nil {
 		return err
 	}
 	o.Action = input[1]
-	o.Time, err = strconv.ParseInt(input[3], 10, 64)
-	if err != nil {
-		return err
-	}
 	o.Price, err = strconv.ParseFloat(input[3], 64)
 	if err != nil {
 		return err
 	}
+	o.StopLimit, err = strconv.ParseFloat(input[4], 64)
+	if err != nil {
+		return err
+	}
+	o.Status = input[4]
 	return nil
 }
 
@@ -125,7 +127,8 @@ func (o *Order) MakeString() []string {
 	output[0] = fmt.Sprintf("%d", o.Id)
 	output[1] = o.Action
 	output[2] = fmt.Sprintf("%f", o.Price)
-	output[3] = fmt.Sprintf("%d", o.Time)
+	output[3] = fmt.Sprintf("%f", o.StopLimit)
+	output[4] = o.Action
 	return output
 }
 

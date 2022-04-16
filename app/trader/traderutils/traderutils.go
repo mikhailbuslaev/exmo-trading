@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func GetCandlesAddr() string {
+func GetParentDir() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err)

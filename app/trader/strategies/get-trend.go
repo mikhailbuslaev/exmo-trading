@@ -39,39 +39,3 @@ func (t *GetTrend) Analyze() (string, error) {
 	ma := traderutils.GetMA(priceArray, t.MAFrame)
 	return t.Solve(candles, ma), nil
 }
-
-func (t *GetTrend) TestStrategy(c *data.Candles, ma []float64) {
-	length := len(ma)
-	lastOrderPrice := c.Array[0].Close
-	profit := 0.00
-	sumProfit := 0.00
-	for i := 5; i < length; i++ {
-		if c.Array[i].Close > ma[i] && c.Array[i-1].Close < ma[i-1]{
-			profit = lastOrderPrice - c.Array[i].Close
-			sumProfit = profit + sumProfit - 0.1*0.003*(lastOrderPrice+c.Array[i].Close)
-			fmt.Println("profit is " + fmt.Sprintf("%f", profit))
-			lastOrderPrice = c.Array[i].Close
-		}
-		if c.Array[i].Close < ma[i] && c.Array[i-1].Close > ma[i-1] {
-			profit = -lastOrderPrice + c.Array[i].Close
-			sumProfit = profit + sumProfit - 0.1*0.003*(lastOrderPrice+c.Array[i].Close)
-			fmt.Println("profit is " + fmt.Sprintf("%f", profit))
-			lastOrderPrice = c.Array[i].Close
-		}
-	}
-	fmt.Println(sumProfit)
-}
-
-func (t *GetTrend) TestAnalyze() error {
-	candles := &data.Candles{}
-	candles.Array = make([]data.Candle, 0, 2000)
-	err := candles.Read(t.CandlesFile)
-	if err != nil {
-		return err
-	}
-
-	priceArray := traderutils.GetArrayFromCandles(candles)
-	ma := traderutils.GetMA(priceArray, t.MAFrame)
-	t.TestStrategy(candles, ma)
-	return nil
-}

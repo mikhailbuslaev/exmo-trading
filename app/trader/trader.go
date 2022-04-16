@@ -9,21 +9,24 @@ import (
 )
 
 type Event struct {
-	Type    string
+	Action    string
 	Context *EventContext
 }
 
 type EventContext struct {
 	Trend      string
 	LastCandle *data.Candle
-	OpenOrders *data.Orders
+	OrdersFile string
+	OrdersHistoryFile string
+	Orders *data.Orders
 }
 
 func (e *Event) Init(eventType string) error {
 	parent := traderutils.GetCandlesAddr()
 	trend := &strategies.GetTrend{}
 	trend.Set(parent + "/cache/5min-candles.csv")
-	OpenOrdersFile := parent + "/cache/open-orders.csv"
+	e.OrdersFile = parent + "/cache/orders.csv"
+	e.OrdersHistoryFile = parent + "/cache/orders-history.csv"
 	var err error
 	e.Context.Trend, err = trend.Analyze()
 	if err != nil {
@@ -41,42 +44,78 @@ func (e *Event) Init(eventType string) error {
 
 	orders := &data.Orders{}
 	orders.Array = make([]data.Order, 0, 10)
-	err = orders.Read(OpenOrdersFile)
+	err = orders.Read(e.OrdersFile)
 	if err != nil {
 		return err
 	}
-	e.Context.OpenOrders = orders
-	e.Type = eventType
+	e.Context.Orders = orders
+	e.Action = eventType
 	return nil
 }
 
-func (e *Event) Handle() {
-	if len(e.Context.OpenOrders.Array) != 0 {
-		lastOrder := &e.Context.OpenOrders.Array[len(e.Context.OpenOrders.Array)-1]
-		if lastOrder.Action != e.Type {
-			CloseOrder(lastOrder)
-			newOrder := &data.Order{}
-			newOrder.Action = e.Type
-			OpenOrder(newOrder)
+func (e *Event) Handle() error{
+	if len(e.Context.Orders.Array) != 0 && e.Context.Orders.Array[len(e.Context.Orders.Array)-1].Action != e.Action{
+		lastOrder := &e.Context.Orders.Array[len(e.Context.Orders.Array)-1]
+		if lastOrder.Action != e.Action {
+			err := e.CloseOrder(lastOrder)
+			if err != nil {
+				return err
+			}
+			err = e.OpenOrder()
+			if err != nil {
+				return err
+			}
 		}
-	} else {
-		newOrder := &data.Order{}
-		newOrder.Action = e.Type
-		OpenOrder(newOrder)
+	} else if len(e.Context.Orders.Array) == 0{	
+		err != e.OpenOrder(newOrder)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *Event) OpenOrder() error {
+	newOrder := &data.Order{}
+	newOrder.Action = e.Type
+	now := time.Now()
+	newOrder.Id = now.Unix()
+	if e.Action == "long" {
+		newOrder.StopLimit = e.Context.LastCandle.Close - e.Context.LastCandle.Close*0.01
+	} else if e.Action == "short"{
+		newOrder.StopLimit = e.Context.LastCandle.Close + e.Context.LastCandle.Close*0.01
+	}
+	newOrder.Price = e.Context.LastCandle.Close
+	newOrder.Status = "open"
+	e.Context.Orders.Array[len(e.Context.Orders.Array)] = newOrder
+	err := Rewrite(e.Context.Orders, e.OrdersFile)
+	if err != nil {
+		return err
 	}
 }
 
-func OpenOrder(o *data.Order) {
+func (e *Event) CloseOrder(o *data.Order) {
+	var orderIndex int
+	for i := range e.Context.Orders {
+		if o.Id == e.Context.Orders.Array[i].Id {
+			orderIndex = i
+		}
+	}
+	e.Context.Orders.Array[orderIndex].Status = "close"
+	err := &e.Context.Orders.Array[orderIndex].Write(e.Context.OrdersHistoryFile)
+	if err != nil {
+		return err
+	}
+	e.Context.Orders.Array = append(e.Context.Orders.Array[:orderIndex], a[orderIndex+1:]...)
 
-}
-
-func CloseOrder(o *data.Order) {
-
+	err = Rewrite(e.Context.Orders, e.OrdersFile)
+	if err != nil {
+		return err
+	}
 }
 
 type Trader interface {
 	Analyze() (string, error)
-	TestAnalyze() error
 }
 
 func Trade(t Trader) {
@@ -90,30 +129,20 @@ func Trade(t Trader) {
 		if err != nil {
 			fmt.Println(err)
 		}
-	}
-}
-
-func TestTrade(t Trader) {
-	eventType := "empty"
-	err := t.TestAnalyze()
-	if err != nil {
-		fmt.Println(err)
-	}
-	if eventType != "empty" {
-		e := &Event{}
-		err := e.Init(eventType)
+		err = e.Handle()
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 }
 
+
 func main() {
-	parent := traderutils.GetCandlesAddr()
-	rsi := &strategies.GetTrend{}
+	parent := traderutils.GetParentDir()
+	rsi := &strategies.RSItrader{}
 	rsi.Set(parent + "/cache/5min-candles.csv")
 	for {
-		TestTrade(rsi)
+		Trade(rsi)
 		time.Sleep(60 * time.Second)
 	}
 }
