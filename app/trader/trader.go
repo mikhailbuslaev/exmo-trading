@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const OrdersFile string = "/cache/orders.csv"
+const OrdersHistoryFile string = "/cache/orders-history.csv"
+const CandlesFile string = "/cache/5min-candles.csv"
+
 type Event struct {
 	Action    string
 	Context *EventContext
@@ -21,12 +25,16 @@ type EventContext struct {
 	Orders *data.Orders
 }
 
+type Trader interface {
+	Analyze() (string, error)
+}
+
 func (e *Event) Init(eventType string) error {
-	parent := traderutils.GetCandlesAddr()
+	parent := traderutils.GetParentDir()
 	trend := &strategies.GetTrend{}
-	trend.Set(parent + "/cache/5min-candles.csv")
-	e.OrdersFile = parent + "/cache/orders.csv"
-	e.OrdersHistoryFile = parent + "/cache/orders-history.csv"
+	trend.Set(parent + CandlesFile)
+	e.Context.OrdersFile = parent + OrdersFile
+	e.Context.OrdersHistoryFile = parent + OrdersHistoryFile
 	var err error
 	e.Context.Trend, err = trend.Analyze()
 	if err != nil {
@@ -44,7 +52,7 @@ func (e *Event) Init(eventType string) error {
 
 	orders := &data.Orders{}
 	orders.Array = make([]data.Order, 0, 10)
-	err = orders.Read(e.OrdersFile)
+	err = orders.Read(e.Context.OrdersFile)
 	if err != nil {
 		return err
 	}
@@ -67,7 +75,7 @@ func (e *Event) Handle() error{
 			}
 		}
 	} else if len(e.Context.Orders.Array) == 0{	
-		err != e.OpenOrder(newOrder)
+		err := e.OpenOrder()
 		if err != nil {
 			return err
 		}
@@ -77,7 +85,7 @@ func (e *Event) Handle() error{
 
 func (e *Event) OpenOrder() error {
 	newOrder := &data.Order{}
-	newOrder.Action = e.Type
+	newOrder.Action = e.Action
 	now := time.Now()
 	newOrder.Id = now.Unix()
 	if e.Action == "long" {
@@ -87,36 +95,33 @@ func (e *Event) OpenOrder() error {
 	}
 	newOrder.Price = e.Context.LastCandle.Close
 	newOrder.Status = "open"
-	e.Context.Orders.Array[len(e.Context.Orders.Array)] = newOrder
-	err := Rewrite(e.Context.Orders, e.OrdersFile)
-	if err != nil {
-		return err
-	}
-}
-
-func (e *Event) CloseOrder(o *data.Order) error{
-	var orderIndex int
-	for i := range e.Context.Orders {
-		if o.Id == e.Context.Orders.Array[i].Id {
-			orderIndex = i
-		}
-	}
-	e.Context.Orders.Array[orderIndex].Status = "close"
-	err := &e.Context.Orders.Array[orderIndex].Write(e.Context.OrdersHistoryFile)
-	if err != nil {
-		return err
-	}
-	e.Context.Orders.Array = append(e.Context.Orders.Array[:orderIndex], a[orderIndex+1:]...)
-
-	err = Rewrite(e.Context.Orders, e.OrdersFile)
+	e.Context.Orders.Array[len(e.Context.Orders.Array)] = *newOrder
+	err := data.Rewrite(e.Context.Orders, e.Context.OrdersFile)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-type Trader interface {
-	Analyze() (string, error)
+func (e *Event) CloseOrder(o *data.Order) error{
+	var orderIndex int
+	for i := range e.Context.Orders.Array {
+		if o.Id == e.Context.Orders.Array[i].Id {
+			orderIndex = i
+		}
+	}
+	e.Context.Orders.Array[orderIndex].Status = "close"
+	err := e.Context.Orders.Array[orderIndex].Write(e.Context.OrdersHistoryFile)
+	if err != nil {
+		return err
+	}
+	e.Context.Orders.Array = append(e.Context.Orders.Array[:orderIndex], e.Context.Orders.Array[orderIndex+1:]...)
+
+	err = data.Rewrite(e.Context.Orders, e.Context.OrdersFile)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func Trade(t Trader) {
@@ -137,11 +142,10 @@ func Trade(t Trader) {
 	}
 }
 
-
 func main() {
 	parent := traderutils.GetParentDir()
 	rsi := &strategies.RSItrader{}
-	rsi.Set(parent + "/cache/5min-candles.csv")
+	rsi.Set(parent + CandlesFile)
 	for {
 		Trade(rsi)
 		time.Sleep(60 * time.Second)

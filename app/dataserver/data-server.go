@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const CandlesFile string = "/cache/5min-candles.csv"
+
 type Handler struct {
 	Context Context `json:"context"`
 }
@@ -103,59 +105,6 @@ func (h *Handler) InitCandles() error {
 	return nil
 }
 
-func (h *Handler) SyncDbAndCache(dbConfigName string) error {
-	db, err := database.Connect(dbConfigName)
-	if err != nil {
-		return err
-	}
-
-	rows, err := database.Select(db, "SELECT * FROM "+h.Context.DbTable+" ORDER BY time ASC;")
-	if err != nil {
-		return err
-	}
-
-	cacheCandles := &data.Candles{}
-	err = cacheCandles.Read(h.Context.CandlesFile)
-	if err != nil {
-		return err
-	}
-
-	dbCandles := &data.Candles{}
-	err = dbCandles.ScanRows(rows)
-	if err != nil {
-		return err
-	}
-
-	dbLen := len(dbCandles.Array)
-	cacheLen := len(cacheCandles.Array)
-
-	if dbLen == cacheLen {
-		for i := 0; i < dbLen; i++ {
-			if dbCandles.Array[i] != cacheCandles.Array[i] {
-				dbCandles.Array[i] = cacheCandles.Array[i]
-			}
-		}
-	} else {
-		return errors.New("length of cache array not match length of db array")
-	}
-
-	err = database.Change(db, "DELETE * FROM "+h.Context.DbTable+";")
-	if err != nil {
-		return err
-	}
-
-	for i := 0; i < dbLen; i++ {
-		err = database.Change(db, "INSERT INTO "+h.Context.DbTable+" VALUES("+fmt.Sprintf("%d", dbCandles.Array[i].Time)+
-			", "+fmt.Sprintf("%f", dbCandles.Array[i].Open)+", "+fmt.Sprintf("%f", dbCandles.Array[i].Close)+", "+
-			fmt.Sprintf("%f", dbCandles.Array[i].High)+", "+fmt.Sprintf("%f", dbCandles.Array[i].Low)+", "+
-			fmt.Sprintf("%f", dbCandles.Array[i].Volume)+");")
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func main() {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -164,7 +113,7 @@ func main() {
 	parent := filepath.Dir(filepath.Dir(wd))
 
 	fivemin := &Handler{}
-	fivemin.Set(parent + "/cache/5min-candles.csv")
+	fivemin.Set(parent + CandlesFile)
 	for {
 		err := fivemin.InitCandles()
 		if err != nil {

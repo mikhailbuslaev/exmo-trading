@@ -323,10 +323,6 @@ func (o *Order) Write(fileName string) error {
 	return nil
 }
 
-func (o *Order) Print() {
-	fmt.Println(o.Action + ", " + fmt.Sprintf("%d", o.Time) + ", " + fmt.Sprintf("%f", o.Price))
-}
-
 func (c *Candles) ScanRows(rows *sql.Rows) error {
 	i := 0
 	for rows.Next() {
