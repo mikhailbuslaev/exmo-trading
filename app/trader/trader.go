@@ -94,7 +94,7 @@ func (e *Event) OpenOrder() error {
 	}
 }
 
-func (e *Event) CloseOrder(o *data.Order) {
+func (e *Event) CloseOrder(o *data.Order) error{
 	var orderIndex int
 	for i := range e.Context.Orders {
 		if o.Id == e.Context.Orders.Array[i].Id {
@@ -112,6 +112,7 @@ func (e *Event) CloseOrder(o *data.Order) {
 	if err != nil {
 		return err
 	}
+	return nil
 }
 
 type Trader interface {
