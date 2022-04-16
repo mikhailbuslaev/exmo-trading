@@ -16,27 +16,25 @@ func (rsi *RSItrader) Set(candlesFile string) {
 	rsi.Period = 14
 }
 
-func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) *data.Order {
+func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) string {
 	length := len(avggain)
 	index := 100 - (100 / (1 + (avggain[length-1] / avglose[length-1])))
 	fmt.Println("RSI is " + fmt.Sprintf("%f", index))
 	if index > 70 {
-		order := traderutils.MakeOrder("short", c.Array[length-1].Close, c.Array[length-1].Time/1000)
-		return order
+		return "short"
 	}
 	if index < 30 {
-		order := traderutils.MakeOrder("long", c.Array[length-1].Close, c.Array[length-1].Time/1000)
-		return order
+		return "long"
 	}
-	return nil
+	return "empty"
 }
 
-func (rsi *RSItrader) Analyze() (*data.Order, error) {
+func (rsi *RSItrader) Analyze() (string, error) {
 	candles := &data.Candles{}
 	candles.Array = make([]data.Candle, 0, 250)
 	err := candles.Read(rsi.CandlesFile)
 	if err != nil {
-		return nil, err
+		return "empty", err
 	}
 	priceArray := traderutils.GetArrayFromCandles(candles)
 	avggain, avglose := traderutils.CountAvgChanges(priceArray, rsi.Period)

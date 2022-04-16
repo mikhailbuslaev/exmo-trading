@@ -2,8 +2,19 @@ package traderutils
 
 import (
 	"exmo-trading/app/data"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 )
+
+func GetCandlesAddr() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	return filepath.Dir(filepath.Dir(wd))
+}
 
 func GetMA(array []float64, frame int) []float64 {
 	length := len(array)
@@ -49,11 +60,6 @@ func CountAvgChanges(array []float64, frame int) ([]float64, []float64) {
 	return avggain, avglose
 }
 
-func CheckActuality(input int64) bool {
-	t := time.Now()
-	return t.Unix()-input < 59
-}
-
 func GetArrayFromCandles(c *data.Candles) []float64 {
 	length := len(c.Array)
 	array := make([]float64, length)
@@ -66,12 +72,4 @@ func GetArrayFromCandles(c *data.Candles) []float64 {
 func ConvertCandleTime(inputTime int64) time.Time {
 	t := inputTime / 1000
 	return time.Unix(t, 0)
-}
-
-func MakeOrder(action string, price float64, time int64) *data.Order {
-	o := &data.Order{}
-	o.Action = action
-	o.Price = price
-	o.Time = time
-	return o
 }

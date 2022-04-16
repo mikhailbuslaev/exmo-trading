@@ -27,6 +27,7 @@ type Orders struct {
 }
 
 type Order struct {
+	Id     int64   `json:"i"`
 	Action string  `json:"a"`
 	Time   int64   `json:"t"`
 	Price  float64 `json:"p"`
@@ -103,12 +104,16 @@ func (c *Candle) ParseString(input []string) error {
 
 func (o *Order) ParseString(input []string) error {
 	var err error
-	o.Action = input[0]
-	o.Time, err = strconv.ParseInt(input[1], 10, 64)
+	o.Time, err = strconv.ParseInt(input[0], 10, 64)
 	if err != nil {
 		return err
 	}
-	o.Price, err = strconv.ParseFloat(input[2], 64)
+	o.Action = input[1]
+	o.Time, err = strconv.ParseInt(input[3], 10, 64)
+	if err != nil {
+		return err
+	}
+	o.Price, err = strconv.ParseFloat(input[3], 64)
 	if err != nil {
 		return err
 	}
@@ -116,10 +121,11 @@ func (o *Order) ParseString(input []string) error {
 }
 
 func (o *Order) MakeString() []string {
-	output := make([]string, 3)
-	output[0] = o.Action
-	output[1] = fmt.Sprintf("%f", o.Price)
-	output[2] = fmt.Sprintf("%d", o.Time)
+	output := make([]string, 4)
+	output[0] = fmt.Sprintf("%d", o.Id)
+	output[1] = o.Action
+	output[2] = fmt.Sprintf("%f", o.Price)
+	output[3] = fmt.Sprintf("%d", o.Time)
 	return output
 }
 
