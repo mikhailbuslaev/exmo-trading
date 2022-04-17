@@ -41,12 +41,11 @@ func (h *Handler) LoadCandles(from, to string) error {
 
 	resp, err := query.Exec(&q)
 	if err != nil {
-		fmt.Println("no candles...")
+		return err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("error while reading response body")
 		return err
 	}
 
@@ -57,14 +56,12 @@ func (h *Handler) LoadCandles(from, to string) error {
 
 	err = candles.ParseJson([]byte(body))
 	if err != nil {
-		fmt.Println("error while parsing json body")
 		return err
 	}
 
 	if len(candles.Array) > 0 {
 		err = candles.Write(h.Context.CandlesFile)
 		if err != nil {
-			fmt.Println("error while appending data")
 			return err
 		}
 		fmt.Println("new candles loaded")
@@ -78,14 +75,12 @@ func (h *Handler) LoadCandles(from, to string) error {
 func ClearFile(fileName string) error {
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
-		fmt.Println("error while opening file")
 		return err
 	}
 
 	defer f.Close()
 	err = f.Truncate(0)
 	if err != nil {
-		fmt.Println("error while clearing file")
 		return err
 	}
 	return nil
@@ -98,7 +93,7 @@ func (h *Handler) InitCandles() error {
 	}
 	t := time.Now()
 
-	err = h.LoadCandles(fmt.Sprintf("%d", t.Unix()-60*h.Context.Resolution*h.Context.CandlesVolume), fmt.Sprintf("%d", t.Unix()))
+	err = h.LoadCandles(fmt.Sprintf("%d", t.Unix()-60*h.Context.Resolution*h.Context.CandlesVolume-1), fmt.Sprintf("%d", t.Unix()+1))
 	if err != nil {
 		return err
 	}
@@ -106,6 +101,7 @@ func (h *Handler) InitCandles() error {
 }
 
 func main() {
+	fmt.Println("launching data server...")
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err)

@@ -19,12 +19,12 @@ func (rsi *RSItrader) Set(candlesFile string) {
 
 func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) string {
 	length := len(avggain)
-	index := 100 - (100 / (1 + (avggain[length-1] / avglose[length-1])))
+	index := 100.0 - (100.0 / (1.0 + (avggain[length-1] / avglose[length-1])))
 	fmt.Println("RSI is " + fmt.Sprintf("%f", index))
-	if index > 70 {
+	if index > 70.0 {
 		return signals.Short
 	}
-	if index < 30 {
+	if index < 30.0 {
 		return signals.Long
 	}
 	return signals.NoSignals

@@ -50,11 +50,11 @@ func CountAvgChanges(array []float64, frame int) ([]float64, []float64) {
 		}
 
 		if m != 0 {
-			avggain[i] = 100 * gains / float64(m)
+			avggain[i] = 100.0 * gains / float64(m)
 		}
 
 		if n != 0 {
-			avglose[i] = 100 * loses / float64(n)
+			avglose[i] = 100.0 * loses / float64(n)
 		}
 	}
 	return avggain, avglose

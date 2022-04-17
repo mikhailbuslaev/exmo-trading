@@ -170,7 +170,7 @@ func (t *Trade) MakeString() []string {
 	output[3] = fmt.Sprintf("%f", t.OpenPrice)
 	output[4] = fmt.Sprintf("%f", t.ClosePrice)
 	output[5] = fmt.Sprintf("%f", t.StopLimit)
-	output[6] = t.Action
+	output[6] = t.Status
 	return output
 }
 

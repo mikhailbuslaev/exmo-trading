@@ -20,6 +20,8 @@ const (
 	CandlesFileVolume int     = 250  // volume of candles in candles file
 	TradesFileVolume  int     = 10   // max amount of open trades
 	StopLimitPercent  float64 = 0.01 // 0.01 means 1%, when price change goes higher or lower this percent, we close unprofitable trade
+	TradeAmount float64 = 100 // amount of usdt in trade
+	TraderTimeout time.Duration = 30 // time of trader reload
 )
 
 type Event struct { // event is need to making trades from strategy signals, we making trade relying on context
@@ -57,7 +59,6 @@ func GetLastPrice() (float64, error) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("error while parsing tickers")
 		return 0, err
 	}
 
@@ -65,7 +66,6 @@ func GetLastPrice() (float64, error) {
 
 	err = ticker.ParseJsonTickers([]byte(body), "BTC_USDT")
 	if err != nil {
-		fmt.Println("error while parsing json body")
 		return 0, err
 	}
 	price, err := strconv.ParseFloat(ticker.Avg, 64)
@@ -164,11 +164,13 @@ func (e *Event) OpenTrade() error {
 	}
 	newTrade.OpenPrice = e.Context.LastPrice
 	newTrade.Status = signals.TradeOpened
+	newTrade.Quantity = TradeAmount
 	e.Context.Trades.Array = append(e.Context.Trades.Array, *newTrade)
 	err := data.Rewrite(&e.Context.Trades, e.Context.TradesFile)
 	if err != nil {
 		return err
 	}
+	fmt.Println("trade opened")
 	return nil
 }
 
@@ -195,6 +197,7 @@ func (e *Event) CloseTrade(t *data.Trade) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("trade closed")
 	return nil
 }
 
@@ -217,11 +220,12 @@ func Trade(t Trader) {
 }
 
 func main() {
+	fmt.Println("launching trader...")
 	parent := traderutils.GetParentDir()
 	rsi := &strategies.RSItrader{}
 	rsi.Set(parent + CandlesFile)
 	for {
 		Trade(rsi)
-		time.Sleep(60 * time.Second)
+		time.Sleep(TraderTimeout * time.Second)
 	}
 }
