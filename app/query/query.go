@@ -73,8 +73,7 @@ func (q *PostQuery) Do() (*http.Response, error) {
 }
 
 func (q *GetQuery) Do() (*http.Response, error) {
-	fmt.Println("https://api.exmo.me/v1/" + q.Method)
-	resp, err := http.Get("https://api.exmo.me/v1/" + q.Method)
+	resp, err := http.Get("https://api.exmo.me/v1.1/" + q.Method)
 	if err != nil {
 		return nil, err
 	}

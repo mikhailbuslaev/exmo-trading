@@ -2,10 +2,11 @@ package strategies
 
 import (
 	"exmo-trading/app/data"
+	"exmo-trading/app/trader/signals"
 	"exmo-trading/app/trader/traderutils"
 )
 
-type GetTrend struct {
+type GetTrend struct { // get trend gives bull or bear signals when actual price lower or hihger than ma200
 	CandlesFile string
 	MAFrame     int
 }
@@ -18,12 +19,12 @@ func (t *GetTrend) Set(candlesFile string) {
 func (t *GetTrend) Solve(c *data.Candles, ma []float64) string {
 	length := len(ma)
 	if c.Array[length].Close > ma[length] {
-		return "bull"
+		return signals.Bull
 	}
 	if c.Array[length].Close < ma[length] {
-		return "bear"
+		return signals.Bear
 	}
-	return "empty"
+	return signals.NoSignals
 }
 
 func (t *GetTrend) Analyze() (string, error) {
@@ -31,7 +32,7 @@ func (t *GetTrend) Analyze() (string, error) {
 	candles.Array = make([]data.Candle, 0, 250)
 	err := candles.Read(t.CandlesFile)
 	if err != nil {
-		return "empty", err
+		return signals.NoSignals, err
 	}
 
 	priceArray := traderutils.GetArrayFromCandles(candles)

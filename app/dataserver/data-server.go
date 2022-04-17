@@ -1,9 +1,8 @@
-package main
+package main //dataserver is autonomic microservice loading and updating candles every 60 seconds
+// at this stage of project dataserver working with only 5-min candles, but amount of files can be expanded
 
 import (
-	"errors"
 	"exmo-trading/app/data"
-	"exmo-trading/app/database"
 	"exmo-trading/app/query"
 	"fmt"
 	"io/ioutil"
@@ -13,6 +12,7 @@ import (
 )
 
 const CandlesFile string = "/cache/5min-candles.csv"
+const DataServerTimeout time.Duration = 60
 
 type Handler struct {
 	Context Context `json:"context"`
@@ -27,7 +27,7 @@ type Context struct {
 }
 
 func (h *Handler) Set(candlesFile string) {
-	h.Context.Symbol = "BTC_USD"
+	h.Context.Symbol = "BTC_USDT"
 	h.Context.Resolution = 5
 	h.Context.CandlesFile = candlesFile
 	h.Context.DbTable = "5min-candles"
@@ -120,6 +120,6 @@ func main() {
 			fmt.Println(err)
 		}
 		fmt.Println("waiting new candles")
-		time.Sleep(60 * time.Second)
+		time.Sleep(DataServerTimeout * time.Second)
 	}
 }
