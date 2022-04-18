@@ -150,15 +150,15 @@ func (t *Trade) ParseString(input []string) error {
 	if err != nil {
 		return err
 	}
-	t.ClosePrice, err = strconv.ParseFloat(input[3], 64)
+	t.ClosePrice, err = strconv.ParseFloat(input[4], 64)
 	if err != nil {
 		return err
 	}
-	t.StopLimit, err = strconv.ParseFloat(input[4], 64)
+	t.StopLimit, err = strconv.ParseFloat(input[5], 64)
 	if err != nil {
 		return err
 	}
-	t.Status = input[5]
+	t.Status = input[6]
 	return nil
 }
 

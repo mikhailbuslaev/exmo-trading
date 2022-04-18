@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -17,14 +16,6 @@ type Handler struct {
 	CandlesFile   		string 			`yaml:"CandlesFile"`
 	CandlesVolume 		int64  			`yaml:"CandlesVolume"`
 	DataServerTimeout 	time.Duration 	`yaml:"DataServerTimeout"`
-}
-
-func (h *Handler) Set() {
-	h.Symbol = "BTC_USDT"
-	h.Resolution = 5
-	h.CandlesFile = "/cache/5min-candles.csv"
-	h.CandlesVolume = 250
-	h.DataServerTimeout = 60
 }
 
 func (h *Handler) Nothing() {

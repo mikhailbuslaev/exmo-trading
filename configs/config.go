@@ -3,24 +3,22 @@ package config
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-    "path/filepath"
-	"exmo-trading/app/trader"
-	"exmo-trading/app/dataserver"
+	"fmt"
 )
 
 type Config interface {
 	Nothing()
 }
 
-func Load(c Config, configFileName string) error{
-	filename, _ := filepath.Abs(configFileName)
-    yamlFile, err := ioutil.ReadFile(filename)
+func Load(c Config, fileName string) error{
+    yamlFile, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
-	err := yaml.Unmarshal([]byte(data), c)
+	err = yaml.Unmarshal(yamlFile, c)
 	if err != nil {
 		return err
 	}
+	fmt.Println(c)
 	return nil
 }

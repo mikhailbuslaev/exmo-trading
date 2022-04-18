@@ -2,14 +2,12 @@ package trader // trader is autonomic microservice that launch strategies and ha
 
 import (
 	"exmo-trading/app/data"
+	"net/http"
+	"strings"
 	"exmo-trading/app/trader/signals"
-	"exmo-trading/app/trader/strategies"
-	"exmo-trading/app/trader/traderutils"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -29,7 +27,7 @@ type Analyzer interface {
 	Analyze() (string, error) //strategies implement this interface
 }
 
-type TraderContext {
+type TraderContext struct {
 	TradingPair 	  string	`yaml:"TradingPair"`		//trading pair; exaple: "BTC_USDT"
 	TradesFile        string	`yaml:"TradesFile"`			//trades file name; example: "/cache/trades.csv"
 	TradesHistoryFile string	`yaml:"TradesHistoryFile"`	//trades history file name; example: "/cache/trades-history.csv"
@@ -48,27 +46,33 @@ func (t *TraderContext) Nothing() {
 }
 
 func (e *Event) GetLastPrice(ctx *TraderContext) error {
-	q := &PostQuery{Method:"ticker"}
-	resp, err := query.Exec(q)
+	url := "https://api.exmo.com/v1.1/ticker"
+	method := "POST"
+	payload := strings.NewReader("")
+	client := &http.Client {}
+	req, err := http.NewRequest(method, url, payload)
 	if err != nil {
-		fmt.Println(err)
-		return 0, err
+	  return err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+	if err != nil {
+	  return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return 0, err
+		return err
 	}
-
 	ticker := &data.Ticker{}
 
 	err = ticker.ParseJsonTickers([]byte(body), ctx.TradingPair)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	e.LastPrice, err = strconv.ParseFloat(ticker.Avg, 64)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	return nil
 }
@@ -152,9 +156,9 @@ func (e *Event) OpenTrade(ctx *TraderContext) error {
 	now := time.Now()
 	newTrade.Id = now.Unix()
 	if e.Action == signals.Long {
-		newTrade.StopLimit = e.Context.LastPrice - e.LastPrice*ctx.StopLimitPercent
+		newTrade.StopLimit = e.LastPrice - e.LastPrice*ctx.StopLimitPercent
 	} else if e.Action == signals.Short {
-		newTrade.StopLimit = e.Context.LastPrice + e.LastPrice*ctx.StopLimitPercent
+		newTrade.StopLimit = e.LastPrice + e.LastPrice*ctx.StopLimitPercent
 	}
 	newTrade.OpenPrice = e.LastPrice
 	newTrade.Status = signals.TradeOpened
@@ -164,6 +168,8 @@ func (e *Event) OpenTrade(ctx *TraderContext) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("order opened:")
+	fmt.Println(newTrade)
 	return nil
 }
 
@@ -178,10 +184,13 @@ func (e *Event) CloseTrade(t *data.Trade, ctx *TraderContext) error {
 
 	e.Trades.Array[tradeIndex].ClosePrice = e.LastPrice
 
-	err = e.Trades.Array[tradeIndex].Write(ctx.TradesHistoryFile) // write trade to archive
+	err := e.Trades.Array[tradeIndex].Write(ctx.TradesHistoryFile) // write trade to archive
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("order closed:")
+	fmt.Println(e.Trades.Array[tradeIndex])
 
 	e.Trades.Array = append(e.Trades.Array[:tradeIndex], e.Trades.Array[tradeIndex+1:]...) // deleting trade
 
@@ -189,6 +198,7 @@ func (e *Event) CloseTrade(t *data.Trade, ctx *TraderContext) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -208,6 +218,7 @@ func (t *Trader) Trade() error {
 	if err != nil {
 		return err
 	}
+	return nil
 }
 
 func (t *Trader) Run() {

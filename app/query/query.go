@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 )
 
 type User struct {
@@ -55,7 +54,7 @@ func (q *PostQuery) Do() (*http.Response, error) {
 	q.GetSign()
 
 	client := &http.Client{}
-	req, _ := http.NewRequest("POST", "https://api.exmo.me/v1/"+q.Method, bytes.NewBuffer([]byte(q.PreparedParams)))
+	req, _ := http.NewRequest("POST", "https://api.exmo.me/v1.1/"+q.Method, bytes.NewBuffer([]byte(q.PreparedParams)))
 	req.Header.Set("Key", q.UserParams.PublicKey)
 	req.Header.Set("Sign", q.Sign)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -67,7 +66,7 @@ func (q *PostQuery) Do() (*http.Response, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
+	fmt.Println(resp.Body)
 	return resp, nil
 }
 

@@ -2,9 +2,6 @@ package traderutils
 
 import (
 	"exmo-trading/app/data"
-	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 )
 
