@@ -1,0 +1,9 @@
+TradingPair : "BTC_USDT"
+TradesFile  : "/cache/15min-btc-usdt-trades.csv"
+TradesHistoryFile : "/cache/15min-btc-usdt-trades-history.csv"
+CandlesFile       : "/cache/15min-btc-usdt-candles.csv"
+CandlesFileVolume : 250
+TradesFileVolume  : 10
+StopLimitPercent  : 0.015
+TradeAmount : 5
+TraderTimeout : 30

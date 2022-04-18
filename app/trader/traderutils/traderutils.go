@@ -8,14 +8,6 @@ import (
 	"time"
 )
 
-func GetParentDir() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-	}
-	return filepath.Dir(filepath.Dir(wd))
-}
-
 func GetMA(array []float64, frame int) []float64 {
 	length := len(array)
 	ma := make([]float64, length)

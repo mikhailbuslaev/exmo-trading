@@ -34,14 +34,13 @@ type GetQuery struct {
 }
 
 func (q *PostQuery) PrepareParams() {
-	post_params := url.Values{}
-	post_params.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano()))
+	postParams := url.Values{}
 	if q.Params != nil {
 		for key, value := range q.Params {
-			post_params.Add(key, value)
+			postParams.Add(key, value)
 		}
 	}
-	q.PreparedParams = post_params.Encode()
+	q.PreparedParams = postParams.Encode()
 }
 
 func (q *PostQuery) GetSign() {

@@ -1,4 +1,4 @@
-package main // trader is autonomic microservice that launch strategies and handling signals by making events
+package trader // trader is autonomic microservice that launch strategies and handling signals by making events
 
 import (
 	"exmo-trading/app/data"
@@ -13,45 +13,43 @@ import (
 	"time"
 )
 
-const (
-	TradesFile        string  = "/cache/trades.csv"
-	TradesHistoryFile string  = "/cache/trades-history.csv"
-	CandlesFile       string  = "/cache/5min-candles.csv"
-	CandlesFileVolume int     = 250  // volume of candles in candles file
-	TradesFileVolume  int     = 10   // max amount of open trades
-	StopLimitPercent  float64 = 0.01 // 0.01 means 1%, when price change goes higher or lower this percent, we close unprofitable trade
-	TradeAmount float64 = 100 // amount of usdt in trade
-	TraderTimeout time.Duration = 30 // time of trader reload
-)
-
-type Event struct { // event is need to making trades from strategy signals, we making trade relying on context
-	Action  string
-	Context EventContext
+type Event struct { 		// event is need to making trades from strategy signals
+							//we making trade relying on previous trades and last price
+	Action  	string		//handled signal:long or short
+	LastPrice	float64 	//actual price of traded pair
+	Trades      data.Trades //array of open trades
 }
 
-type EventContext struct {
-	LastPrice         float64
-	TradesFile        string
-	TradesHistoryFile string
-	Trades            data.Trades
+type Trader struct {
+	Analyzer
+	Context TraderContext
 }
 
-type Trader interface {
-	Analyze() (string, error)
+type Analyzer interface {
+	Analyze() (string, error) //strategies implement this interface
 }
 
-func GetLastPrice() (float64, error) {
-	url := "https://api.exmo.me/v1.1/ticker"
-	method := "POST"
-	payload := strings.NewReader("")
-	client := &http.Client{}
-	req, err := http.NewRequest(method, url, payload)
-	if err != nil {
-		fmt.Println(err)
-		return 0, err
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := client.Do(req)
+type TraderContext {
+	TradingPair 	  string	`yaml:"TradingPair"`		//trading pair; exaple: "BTC_USDT"
+	TradesFile        string	`yaml:"TradesFile"`			//trades file name; example: "/cache/trades.csv"
+	TradesHistoryFile string	`yaml:"TradesHistoryFile"`	//trades history file name; example: "/cache/trades-history.csv"
+	CandlesFile       string	`yaml:"CandlesFile"`		//candles file name; example: "/cache/5min-candles.csv"
+	CandlesFileVolume int		`yaml:"CandlesFileVolume"`	// volume of candles in candles file; default: 250
+	TradesFileVolume  int		`yaml:"TradesFileVolume"`	// max amount of open trades; default: 10 (means 10 trades)
+	StopLimitPercent  float64 	`yaml:"StopLimitPercent"`	// 0.01 means 1%, when price change goes higher 
+															// or lower this percent, we close unprofitable trade
+															// default: 0.01
+	TradeAmount 	  float64	`yaml:"TradeAmount"`		// trade volume; example: 100 USDT in BTC_USDT pair
+	TraderTimeout time.Duration `yaml:"TraderTimeout"`		// time of trader reload; default: 30
+}
+
+func (t *TraderContext) Nothing() {
+
+}
+
+func (e *Event) GetLastPrice(ctx *TraderContext) error {
+	q := &PostQuery{Method:"ticker"}
+	resp, err := query.Exec(q)
 	if err != nil {
 		fmt.Println(err)
 		return 0, err
@@ -64,49 +62,45 @@ func GetLastPrice() (float64, error) {
 
 	ticker := &data.Ticker{}
 
-	err = ticker.ParseJsonTickers([]byte(body), "BTC_USDT")
+	err = ticker.ParseJsonTickers([]byte(body), ctx.TradingPair)
 	if err != nil {
 		return 0, err
 	}
-	price, err := strconv.ParseFloat(ticker.Avg, 64)
+	e.LastPrice, err = strconv.ParseFloat(ticker.Avg, 64)
 	if err != nil {
 		return 0, err
 	}
-	return price, nil
+	return nil
 }
 
-func (e *Event) Init(eventType string) error { // loading context for our event
-	parent := traderutils.GetParentDir()
-	e.Context.TradesFile = parent + TradesFile
-	e.Context.TradesHistoryFile = parent + TradesHistoryFile
+func (e *Event) Init(eventType string, ctx *TraderContext) error { // loading context for our event
 
-	lastPrice, err := GetLastPrice()
+	err := e.GetLastPrice(ctx)
 	if err != nil {
 		return err
 	}
-	e.Context.LastPrice = lastPrice
 
 	trades := &data.Trades{}
-	trades.Array = make([]data.Trade, 0, TradesFileVolume)
-	err = trades.Read(e.Context.TradesFile)
+	trades.Array = make([]data.Trade, 0, ctx.TradesFileVolume)
+	err = trades.Read(ctx.TradesFile)
 	if err != nil {
 		return err
 	}
-	e.Context.Trades = *trades
+	e.Trades = *trades
 	e.Action = eventType
 	return nil
 }
 
-func (e *Event) HandleOpenedTrades() error {
-	for i := range e.Context.Trades.Array {
-		if e.Context.Trades.Array[i].Action == signals.Long && e.Context.Trades.Array[i].StopLimit > e.Context.LastPrice {
-			err := e.CloseTrade(&e.Context.Trades.Array[i])
+func (e *Event) HandleOpenedTrades(ctx *TraderContext) error {
+	for i := range e.Trades.Array {
+		if e.Trades.Array[i].Action == signals.Long && e.Trades.Array[i].StopLimit > e.LastPrice {
+			err := e.CloseTrade(&e.Trades.Array[i], ctx)
 			if err != nil {
 				return err
 			}
 		}
-		if e.Context.Trades.Array[i].Action == signals.Short && e.Context.Trades.Array[i].StopLimit < e.Context.LastPrice {
-			err := e.CloseTrade(&e.Context.Trades.Array[i])
+		if e.Trades.Array[i].Action == signals.Short && e.Trades.Array[i].StopLimit < e.LastPrice {
+			err := e.CloseTrade(&e.Trades.Array[i], ctx)
 			if err != nil {
 				return err
 			}
@@ -115,23 +109,23 @@ func (e *Event) HandleOpenedTrades() error {
 	return nil
 }
 
-func (e *Event) HandleSignal() error {
+func (e *Event) HandleSignal(ctx *TraderContext) error {
 	if e.Action == signals.Long || e.Action == signals.Short {
-		if len(e.Context.Trades.Array) != 0 && e.Context.Trades.Array[len(e.Context.Trades.Array)-1].Action != e.Action {
-			lastTrade := &e.Context.Trades.Array[len(e.Context.Trades.Array)-1]
+		if len(e.Trades.Array) != 0 && e.Trades.Array[len(e.Trades.Array)-1].Action != e.Action {
+			lastTrade := &e.Trades.Array[len(e.Trades.Array)-1]
 			if lastTrade.Action != e.Action {
-				err := e.CloseTrade(lastTrade)
+				err := e.CloseTrade(lastTrade, ctx)
 				if err != nil {
 					return err
 				}
-				err = e.OpenTrade()
+				err = e.OpenTrade(ctx)
 				if err != nil {
 					return err
 				}
 			}
 		}
-		if len(e.Context.Trades.Array) == 0 {
-			err := e.OpenTrade()
+		if len(e.Trades.Array) == 0 {
+			err := e.OpenTrade(ctx)
 			if err != nil {
 				return err
 			}
@@ -140,92 +134,89 @@ func (e *Event) HandleSignal() error {
 	return nil
 }
 
-func (e *Event) Handle() error { // checking event context and making trades
-	err := e.HandleOpenedTrades()
+func (e *Event) Handle(ctx *TraderContext) error { // checking event context and making trades
+	err := e.HandleOpenedTrades(ctx)
 	if err != nil {
 		return err
 	}
-	err = e.HandleSignal()
+	err = e.HandleSignal(ctx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Event) OpenTrade() error {
+func (e *Event) OpenTrade(ctx *TraderContext) error {
 	newTrade := &data.Trade{}
 	newTrade.Action = e.Action
 	now := time.Now()
 	newTrade.Id = now.Unix()
 	if e.Action == signals.Long {
-		newTrade.StopLimit = e.Context.LastPrice - e.Context.LastPrice*StopLimitPercent
+		newTrade.StopLimit = e.Context.LastPrice - e.LastPrice*ctx.StopLimitPercent
 	} else if e.Action == signals.Short {
-		newTrade.StopLimit = e.Context.LastPrice + e.Context.LastPrice*StopLimitPercent
+		newTrade.StopLimit = e.Context.LastPrice + e.LastPrice*ctx.StopLimitPercent
 	}
-	newTrade.OpenPrice = e.Context.LastPrice
+	newTrade.OpenPrice = e.LastPrice
 	newTrade.Status = signals.TradeOpened
-	newTrade.Quantity = TradeAmount
-	e.Context.Trades.Array = append(e.Context.Trades.Array, *newTrade)
-	err := data.Rewrite(&e.Context.Trades, e.Context.TradesFile)
+	newTrade.Quantity = ctx.TradeAmount
+	e.Trades.Array = append(e.Trades.Array, *newTrade)
+	err := data.Rewrite(&e.Trades, ctx.TradesFile)
 	if err != nil {
 		return err
 	}
-	fmt.Println("trade opened")
 	return nil
 }
 
-func (e *Event) CloseTrade(t *data.Trade) error {
+func (e *Event) CloseTrade(t *data.Trade, ctx *TraderContext) error {
 	var tradeIndex int
-	for i := range e.Context.Trades.Array {
-		if t.Id == e.Context.Trades.Array[i].Id {
+	for i := range e.Trades.Array {
+		if t.Id == e.Trades.Array[i].Id {
 			tradeIndex = i
 		}
 	}
-	e.Context.Trades.Array[tradeIndex].Status = signals.TradeClosed
-	lastPrice, err := GetLastPrice()
-	if err != nil {
-		return err
-	}
-	e.Context.Trades.Array[tradeIndex].ClosePrice = lastPrice
-	err = e.Context.Trades.Array[tradeIndex].Write(e.Context.TradesHistoryFile) // write trade to archive
-	if err != nil {
-		return err
-	}
-	e.Context.Trades.Array = append(e.Context.Trades.Array[:tradeIndex], e.Context.Trades.Array[tradeIndex+1:]...) // deleting trade
+	e.Trades.Array[tradeIndex].Status = signals.TradeClosed
 
-	err = data.Rewrite(&e.Context.Trades, e.Context.TradesFile) // rewrite open trades file
+	e.Trades.Array[tradeIndex].ClosePrice = e.LastPrice
+
+	err = e.Trades.Array[tradeIndex].Write(ctx.TradesHistoryFile) // write trade to archive
 	if err != nil {
 		return err
 	}
-	fmt.Println("trade closed")
+
+	e.Trades.Array = append(e.Trades.Array[:tradeIndex], e.Trades.Array[tradeIndex+1:]...) // deleting trade
+
+	err = data.Rewrite(&e.Trades, ctx.TradesFile) // rewrite open trades file
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func Trade(t Trader) {
-	eventType, err := t.Analyze()
+func (t *Trader) Trade() error {
+	eventType, err := t.Analyzer.Analyze()
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	e := &Event{}
-	err = e.Init(eventType)
+	err = e.Init(eventType, &t.Context)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
-	err = e.Handle()
+	err = e.Handle(&t.Context)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 }
 
-func main() {
-	fmt.Println("launching trader...")
-	parent := traderutils.GetParentDir()
-	rsi := &strategies.RSItrader{}
-	rsi.Set(parent + CandlesFile)
+func (t *Trader) Run() {
 	for {
-		Trade(rsi)
-		time.Sleep(TraderTimeout * time.Second)
+		err := t.Trade()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		time.Sleep(t.Context.TraderTimeout * time.Second)
 	}
 }

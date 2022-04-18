@@ -8,7 +8,7 @@ import (
 )
 
 type RSItrader struct { // rsi strategy gives long or short signals when rsi index goes lower than 30 or higher than 70
-	CandlesFile string
+	CandlesFile string 
 	Period      int
 }
 
@@ -20,7 +20,6 @@ func (rsi *RSItrader) Set(candlesFile string) {
 func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) string {
 	length := len(avggain)
 	index := 100.0 - (100.0 / (1.0 + (avggain[length-1] / avglose[length-1])))
-	fmt.Println("RSI is " + fmt.Sprintf("%f", index))
 	if index > 70.0 {
 		return signals.Short
 	}
@@ -33,7 +32,7 @@ func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) string 
 func (rsi *RSItrader) Analyze() (string, error) {
 	candles := &data.Candles{}
 	candles.Array = make([]data.Candle, 0, 250)
-	err := candles.Read(rsi.CandlesFile)
+	err := candles.Read(CandlesFile)
 	if err != nil {
 		return signals.NoSignals, err
 	}

@@ -1,0 +1,5 @@
+Symbol : "BTC_USDT"
+Resolution : 15
+CandlesFile : "/cache/15min-btc-usdt-candles.csv"
+CandlesVolume : 250
+DataServerTimeout : 60
