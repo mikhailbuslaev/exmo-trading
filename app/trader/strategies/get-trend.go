@@ -7,11 +7,13 @@ import (
 )
 
 type GetTrend struct { // get trend gives bull or bear signals when actual price lower or hihger than ma200
-	CandlesFile string
-	MAFrame     int
+	CandlesFile       string
+	MAFrame           int
+	CandlesFileVolume int
 }
 
-func (t *GetTrend) Set(candlesFile string) {
+func (t *GetTrend) Set(candlesFile string, candlesFileVolume int) {
+	t.CandlesFileVolume = candlesFileVolume
 	t.CandlesFile = candlesFile
 	t.MAFrame = 200
 }

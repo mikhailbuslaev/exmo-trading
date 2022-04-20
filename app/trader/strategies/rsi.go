@@ -4,25 +4,23 @@ import (
 	"exmo-trading/app/data"
 	"exmo-trading/app/trader/signals"
 	"exmo-trading/app/trader/traderutils"
-	"fmt"
 )
 
 type RSItrader struct { // rsi strategy gives long or short signals when rsi index goes lower than 30 or higher than 70
-	CandlesFile string 
+	CandlesFile       string
 	CandlesFileVolume int
-	Period      int
+	Period            int
 }
 
-func (rsi *RSItrader) Set(candlesFile string) {
-	rsi.CandlesFile = candlesFile
-	rsi.CandlesFileVolume = 250
+func (rsi *RSItrader) Set(candlesFile string, candlesFileVolume int) {
 	rsi.Period = 14
+	rsi.CandlesFile = candlesFile
+	rsi.CandlesFileVolume = candlesFileVolume
 }
 
 func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) string {
 	length := len(avggain)
 	index := 100.0 - (100.0 / (1.0 + (avggain[length-1] / avglose[length-1])))
-	fmt.Println("RSI index is "+fmt.Sprintf("%f", index))
 	if index > 70.0 {
 		return signals.Short
 	}

@@ -199,7 +199,6 @@ func (c *Candles) Read(fileName string) error {
 	if err != nil {
 		return err
 	}
-
 	for i := range records {
 		candle := &Candle{}
 		err := candle.ParseString(records[i])
@@ -247,7 +246,6 @@ func (t *Trades) Read(fileName string) error {
 	if err != nil {
 		return err
 	}
-
 	for i := range records {
 		trade := &Trade{}
 		err := trade.ParseString(records[i])
