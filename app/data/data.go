@@ -48,7 +48,7 @@ type Ticker struct {
 }
 
 type Data interface {
-	ParseJson([]byte) error
+	CanParseJson()
 	Read(string) error
 	Write(string) error
 }
@@ -74,32 +74,13 @@ func (t *Ticker) ParseJsonTickers(buf []byte, pair string) error {
 	return nil
 }
 
-func (c *Candle) ParseJson(buf []byte) error {
-	err := json.Unmarshal(buf, c)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+func (c *Candle) CanParseJson()  {}
+func (c *Candles) CanParseJson() {}
+func (t *Trade) CanParseJson()   {}
+func (t *Trades) CanParseJson()  {}
 
-func (c *Candles) ParseJson(buf []byte) error {
-	err := json.Unmarshal(buf, c)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *Trade) ParseJson(buf []byte) error {
-	err := json.Unmarshal(buf, t)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *Trades) ParseJson(buf []byte) error {
-	err := json.Unmarshal(buf, t)
+func ParseJson(d Data, buf []byte) error {
+	err := json.Unmarshal(buf, d)
 	if err != nil {
 		return err
 	}

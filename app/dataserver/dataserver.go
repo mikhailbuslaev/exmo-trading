@@ -11,15 +11,15 @@ import (
 )
 
 type Handler struct {
-	Symbol        		string 			`yaml:"Symbol"`
-	Resolution    		int64  			`yaml:"Resolution"`
-	CandlesFile   		string 			`yaml:"CandlesFile"`
-	CandlesVolume 		int64  			`yaml:"CandlesVolume"`
-	DataServerTimeout 	time.Duration 	`yaml:"DataServerTimeout"`
+	Symbol            string        `yaml:"Symbol"`
+	Resolution        int64         `yaml:"Resolution"`
+	CandlesFile       string        `yaml:"CandlesFile"`
+	CandlesVolume     int64         `yaml:"CandlesVolume"`
+	DataServerTimeout time.Duration `yaml:"DataServerTimeout"`
 }
 
 func (h *Handler) Nothing() {
-	
+
 }
 
 func (h *Handler) LoadCandles(from, to string) error {
@@ -42,7 +42,7 @@ func (h *Handler) LoadCandles(from, to string) error {
 	candles := &data.Candles{}
 	candles.Array = make([]data.Candle, 0, h.CandlesVolume)
 
-	err = candles.ParseJson([]byte(body))
+	err = data.ParseJson(candles, []byte(body))
 	if err != nil {
 		return err
 	}

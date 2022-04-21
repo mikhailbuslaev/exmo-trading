@@ -43,7 +43,7 @@ func (t *TraderContext) Nothing() {
 }
 
 func (e *Event) GetLastPrice(ctx *TraderContext) error {
-	url := "https://api.exmo.com/v1.1/ticker"
+	url := "https://api.exmo.me/v1.1/ticker"
 	method := "POST"
 	payload := strings.NewReader("")
 	client := &http.Client{}
