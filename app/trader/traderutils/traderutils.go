@@ -3,6 +3,7 @@ package traderutils
 import (
 	"exmo-trading/app/data"
 	"time"
+	"math"
 )
 
 func GetMA(array []float64, frame int) []float64 {
@@ -10,12 +11,25 @@ func GetMA(array []float64, frame int) []float64 {
 	ma := make([]float64, length)
 	for i := frame; i < length; i++ {
 		sum := 0.00
-		for j := i - frame; j <= i; j++ {
+		for j := i - frame; j < i; j++ {
 			sum = sum + array[j]
 		}
 		ma[i] = sum / float64(frame)
 	}
 	return ma
+}
+
+func GetSD(priceArray, ma []float64, frame int) []float64 {
+	length := len(priceArray)
+	sd := make([]float64, length)
+	for i := frame; i < length; i++ {
+		sum := 0.00
+		for j := i - frame; j <= i; j++ {
+			sum = sum + (priceArray[j]-ma[i])*(priceArray[j]-ma[i])
+		}
+		sd[i] = math.Sqrt(sum / float64(frame))
+	}
+	return sd
 }
 
 func CountAvgChanges(array []float64, frame int) ([]float64, []float64) {
@@ -52,7 +66,7 @@ func CountAvgChanges(array []float64, frame int) ([]float64, []float64) {
 func GetArrayFromCandles(c *data.Candles) []float64 {
 	length := len(c.Array)
 	array := make([]float64, length)
-	for i := range array {
+	for i := 0; i < length; i++ {
 		array[i] = c.Array[i].Close
 	}
 	return array
