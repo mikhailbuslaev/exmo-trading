@@ -2,4 +2,4 @@ Symbol : "BTC_USDT"
 Resolution : 5
 CandlesFile : "/cache/candles/5min-btc-usdt-candles.csv"
 CandlesVolume : 250
-DataServerTimeout : 60
+DataHandlerTimeout : 60

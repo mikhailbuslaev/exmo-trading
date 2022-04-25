@@ -6,32 +6,34 @@ import (
 	"exmo-trading/app/trader/traderutils"
 )
 
-type BollingerBandsTrader struct { // rsi strategy gives long or short signals when rsi index goes lower than 30 or higher than 70
+type BollingerBands struct { // rsi strategy gives long or short signals when rsi index goes lower than 30 or higher than 70
 	CandlesFile       string
 	CandlesFileVolume int
 	Period            int
 	Factor			  int
 }
 
-func (bb *BollingerBandsTrader) Set(candlesFile string, candlesFileVolume int) {
+func (bb *BollingerBands) Set(candlesFile string, candlesFileVolume int) {
 	bb.Period = 40
 	bb.Factor = 2
 	bb.CandlesFile = candlesFile
 	bb.CandlesFileVolume = candlesFileVolume
 }
 
-func (bb *BollingerBandsTrader) Solve(c *data.Candles, topborder, bottomborder []float64) string {
+func (bb *BollingerBands) Solve(c *data.Candles, topborder, bottomborder []float64) string {
 	length := len(c.Array)
-	if c.Array[length-1].Close > topborder[length-1] {
-		return signals.Short
-	}
-	if c.Array[length-1].Close < bottomborder[length-1] {
-		return signals.Long
+	if length != 0 {
+		if c.Array[length-1].Close > topborder[length-1] {
+			return signals.Short
+		}
+		if c.Array[length-1].Close < bottomborder[length-1] {
+			return signals.Long
+		}
 	}
 	return signals.NoSignals
 }
 
-func (bb *BollingerBandsTrader) Analyze() (string, error) {
+func (bb *BollingerBands) Analyze() (string, error) {
 	candles := &data.Candles{}
 	candles.Array = make([]data.Candle, 0, bb.CandlesFileVolume)
 	err := candles.Read(bb.CandlesFile)

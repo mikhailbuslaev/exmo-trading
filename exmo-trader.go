@@ -1,7 +1,7 @@
 package main
 
 import (
-	"exmo-trading/app/dataserver"
+	"exmo-trading/app/datahandler"
 	"exmo-trading/app/trader"
 	"exmo-trading/app/trader/strategies"
 	config "exmo-trading/configs"
@@ -12,7 +12,7 @@ import (
 
 type App struct {
 	Traders      []trader.Trader
-	DataHandlers []dataserver.Handler
+	DataHandlers []datahandler.Handler
 }
 
 func PrepareTrader(path, configName string, strategy strategies.Strategy) trader.Trader {
@@ -29,8 +29,8 @@ func PrepareTrader(path, configName string, strategy strategies.Strategy) trader
 	return trader
 }
 
-func PrepareDataHandler(path, configName string) dataserver.Handler {
-	datahandler := dataserver.Handler{}
+func PrepareDataHandler(path, configName string) datahandler.Handler {
+	datahandler := datahandler.Handler{}
 	err := config.Load(&datahandler, configName)
 	if err != nil {
 		fmt.Println(err)
@@ -48,13 +48,17 @@ func PrepareApp() *App {
 
 	fmt.Println("prepared traders: ")
 	time.Sleep(1 * time.Second)
-	app.Traders = append(app.Traders, PrepareTrader(path, path+"/configs/trader-configs/5min-btc-usdt-trader.yaml", &strategies.BollingerBandsTrader{}))
-	app.Traders = append(app.Traders, PrepareTrader(path, path+"/configs/trader-configs/15min-btc-usdt-trader.yaml", &strategies.RSItrader{}))
+	app.Traders = append(app.Traders, PrepareTrader(path, path+
+		"/configs/trader-configs/5min-btc-usdt-trader.yaml", &strategies.BollingerBands{}))
+	app.Traders = append(app.Traders, PrepareTrader(path, path+
+		"/configs/trader-configs/15min-btc-usdt-trader.yaml", &strategies.RSI{}))
 
 	fmt.Println("prepared datahandlers: ")
 	time.Sleep(1 * time.Second)
-	app.DataHandlers = append(app.DataHandlers, PrepareDataHandler(path, path+"/configs/dataserver-configs/5min-btc-usdt-datahandler.yaml"))
-	app.DataHandlers = append(app.DataHandlers, PrepareDataHandler(path, path+"/configs/dataserver-configs/15min-btc-usdt-datahandler.yaml"))
+	app.DataHandlers = append(app.DataHandlers, PrepareDataHandler(path, path+
+		"/configs/datahandler-configs/5min-btc-usdt-datahandler.yaml"))
+	app.DataHandlers = append(app.DataHandlers, PrepareDataHandler(path, path+
+		"/configs/datahandler-configs/15min-btc-usdt-datahandler.yaml"))
 
 	return &app
 }

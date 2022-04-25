@@ -1,5 +1,5 @@
-package dataserver //dataserver is autonomic microservice loading and updating candles every 60 seconds
-// at this stage of project dataserver working with only 5-min candles, but amount of files can be expanded
+package datahandler //datahandler is autonomic microservice loading and updating candles every 60 seconds
+// at this stage of project datahandler working with only 5-min candles, but amount of files can be expanded
 
 import (
 	"exmo-trading/app/data"
@@ -15,12 +15,10 @@ type Handler struct {
 	Resolution        int64         `yaml:"Resolution"`
 	CandlesFile       string        `yaml:"CandlesFile"`
 	CandlesVolume     int64         `yaml:"CandlesVolume"`
-	DataServerTimeout time.Duration `yaml:"DataServerTimeout"`
+	DataHandlerTimeout time.Duration `yaml:"DataHandlerTimeout"`
 }
 
-func (h *Handler) Nothing() {
-
-}
+func (h *Handler) Nothing() {}
 
 func (h *Handler) LoadCandles(from, to string) error {
 	stringResolution := fmt.Sprintf("%d", h.Resolution)
@@ -52,7 +50,7 @@ func (h *Handler) LoadCandles(from, to string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("dataserver: new candles loaded")
+		fmt.Println("datahandler: new candles loaded")
 	}
 	return nil
 }
@@ -88,7 +86,7 @@ func (h *Handler) InitCandles() error {
 func (h *Handler) Run() {
 	for {
 		err := h.InitCandles()
-		time.Sleep(h.DataServerTimeout * time.Second)
+		time.Sleep(h.DataHandlerTimeout * time.Second)
 		if err != nil {
 			fmt.Println(err)
 			return

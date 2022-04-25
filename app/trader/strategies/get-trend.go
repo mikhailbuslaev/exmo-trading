@@ -20,11 +20,13 @@ func (t *GetTrend) Set(candlesFile string, candlesFileVolume int) {
 
 func (t *GetTrend) Solve(c *data.Candles, ma []float64) string {
 	length := len(ma)
-	if c.Array[length].Close > ma[length] {
-		return signals.Bull
-	}
-	if c.Array[length].Close < ma[length] {
-		return signals.Bear
+	if length != 0 {
+		if c.Array[length].Close > ma[length] {
+			return signals.Bull
+		}
+		if c.Array[length].Close < ma[length] {
+			return signals.Bear
+		}
 	}
 	return signals.NoSignals
 }
