@@ -100,3 +100,7 @@
 
 >	app.DataHandlers = append(app.DataHandlers, PrepareDataHandler(path, path+
 >		"/configs/datahandler-configs/datahandler-config.yaml"))
+
+### 3 stage
+
+<p>save changes, now you have new data handler.</p>
