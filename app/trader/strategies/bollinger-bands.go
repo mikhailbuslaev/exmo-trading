@@ -45,8 +45,8 @@ func (bb *BollingerBandsTrader) Analyze() (string, error) {
 	topborder := make([]float64, length)
 	bottomborder := make([]float64, length)
 	for i := 0; i < length; i++ {
-		topborder[i] = ma[i] + sd[i]*float(bb.Factor)
-		bottomborder[i] = ma[i] - sd[i]*float(bb.Factor)
+		topborder[i] = ma[i] + sd[i]*float64(bb.Factor)
+		bottomborder[i] = ma[i] - sd[i]*float64(bb.Factor)
 	}
 	return bb.Solve(candles, topborder, bottomborder), nil
 }
