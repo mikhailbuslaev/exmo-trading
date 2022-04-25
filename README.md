@@ -1,5 +1,5 @@
 # exmo-trading
-<p>the application allows you to automate trading on the [EXMO cryptocurrency exchange](https://exmo.me/)</p>
+<p>the application allows you to automate trading on the (https://exmo.me/)</p>
 
 ## installation
 
@@ -7,18 +7,18 @@
 
 <p>you need to have installed golang, git.</p>
 
-> git clone https://github.com/mikhailbuslaev/exmo-trading.git
+    git clone https://github.com/mikhailbuslaev/exmo-trading.git
 
 ### via docker
 
 <p>you need to have installed docker.</p>
 
-> docker run -it exmo-trading
+    docker run -it exmo-trading
 
 ## run
 
-> cd exmo-trading
-> go run exmo-trader.go
+    cd exmo-trading
+    go run exmo-trader.go
 
 ## setting
 
@@ -29,20 +29,20 @@
 
 ### 1 stage - make new trader config
 
-> cd exmo-trading/configs/trader-configs
-> mkfile trader-config.yaml
+    cd exmo-trading/configs/trader-configs
+    mkfile trader-config.yaml
 
 <p>trader-config.yaml example:</p>
 
-> TradingPair : "BTC_USDT"
-> TradesFile  : "/cache/trades/5min-btc-usdt-trades.csv"
-> TradesHistoryFile : "/cache/trades-history/5min-btc-usdt-trades-history.csv"
-> CandlesFile       : "/cache/candles/5min-btc-usdt-candles.csv"
-> CandlesFileVolume : 250
-> TradesFileVolume  : 10
-> StopLimitPercent  : 0.015
-> TradeAmount : 5
-> TraderTimeout : 30
+    TradingPair : "BTC_USDT"
+    TradesFile  : "/cache/trades/5min-btc-usdt-trades.csv"
+    TradesHistoryFile : "/cache/trades-history/5min-btc-usdt-trades-history.csv"
+    CandlesFile       : "/cache/candles/5min-btc-usdt-candles.csv"
+    CandlesFileVolume : 250
+    TradesFileVolume  : 10
+    StopLimitPercent  : 0.015
+    TradeAmount : 5
+    TraderTimeout : 30
 
 <p>TradingPair examples : "ETH_USDT", "BTC_ETH".</p>
 <p>TradesFile is a file that will store open trades.</p>
@@ -57,11 +57,11 @@
 
 ### 2 stage - change exmo-trader.go
 
-> cd exmo-trading
+    cd exmo-trading
 <p>add new line to PrepareApp() after app.Traders = append(... and before fmt.Println("prepared datahandlers: ")</p>
 
->	app.Traders = append(app.Traders, PrepareTrader(path, path+
->		"/configs/trader-configs/trader-config.yaml", &strategies.RSI{}))
+    app.Traders = append(app.Traders, PrepareTrader(path, path+
+    	"/configs/trader-configs/trader-config.yaml", &strategies.RSI{}))
 
 <p>&strategies.RSI{} and &strategies.BollingerBands{} is 2 available strategies at this stage of project</p>
 
@@ -76,16 +76,16 @@
 
 ### 1 stage - make new datahandler config
 
-> cd exmo-trading/configs/datahandler-configs
-> mkfile datahandler-config.yaml
+    cd exmo-trading/configs/datahandler-configs
+    mkfile datahandler-config.yaml
 
 <p>datahandler-config.yaml example:</p>
 
-> Symbol : "BTC_USDT"
-> Resolution : 5
-> CandlesFile : "/cache/candles/5min-btc-usdt-candles.csv"
-> CandlesVolume : 250
-> DataHandlerTimeout : 60
+    Symbol : "BTC_USDT"
+    Resolution : 5
+    CandlesFile : "/cache/candles/5min-btc-usdt-candles.csv"
+    CandlesVolume : 250
+    DataHandlerTimeout : 60
 
 <p>Symbol examples : "ETH_USDT", "BTC_ETH".</p>
 <p>Resolution means duration of single candle, 5 means 5 minute candles.</p>
@@ -95,11 +95,12 @@
 
 ### 2 stage - change exmo-trader.go
 
-> cd exmo-trading
+    cd exmo-trading
+
 <p>add new line to PrepareApp() after app.Datahandlers = append(... and before return &app)</p>
 
->	app.DataHandlers = append(app.DataHandlers, PrepareDataHandler(path, path+
->		"/configs/datahandler-configs/datahandler-config.yaml"))
+    app.DataHandlers = append(app.DataHandlers, PrepareDataHandler(path, path+
+    	"/configs/datahandler-configs/datahandler-config.yaml"))
 
 ### 3 stage
 
