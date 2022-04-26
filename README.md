@@ -20,10 +20,15 @@
     cd exmo-trading
     go run exmo-trader.go
 
+## run at server
+
+    cd exmo-trading
+    nohup go run exmo-trader.go &
+
 ## setting
 
-<p>by default, the application starts 2 data processors and one trade</p>
-<p>for each of these processors, but you can add as many data processors and traders as you like.</p>
+<p>by default, the application starts 2 data processors and one trade 
+for each of these processors, but you can add as many data processors and traders as you like.</p>
 
 ## example: add new trader
 
@@ -44,16 +49,24 @@
     TradeAmount : 5
     TraderTimeout : 30
 
-<p>TradingPair examples : "ETH_USDT", "BTC_ETH".</p>
-<p>TradesFile is a file that will store open trades.</p>
-<p>TradesHistoryFile is a file that will store history of closed trades.</p>
-<p>CandlesFile is a file that will be analyzed by the trading strategy.</p>
-<p>CandlesFileVolume is a volume of records(candles) in CandlesFile, default: 250.</p>
-<p>TradesFileVolume is a maximum volume of open trades in TradesFile, default: 10.</p>
-<p>StopLimitPercent is a this is a part of the current deal price, from which the </p>
-<p>stop-limit is set, 0.015 means 1.5%.</p>
-<p>TradeAmount is a volume of trade, example: 5 means 5 usdt in "ETH_USDT"</p>
-<p>TradeTimeout is a reload duration of trader</p>
+><p>TradingPair examples : "ETH_USDT", "BTC_ETH".</p>
+>
+><p>TradesFile is a file that will store open trades.</p>
+>
+><p>TradesHistoryFile is a file that will store history of closed trades.</p>
+>
+><p>CandlesFile is a file that will be analyzed by the trading strategy.</p>
+>
+><p>CandlesFileVolume is a volume of records(candles) in CandlesFile, default: 250.</p>
+>
+><p>TradesFileVolume is a maximum volume of open trades in TradesFile, default: 10.</p>
+>
+><p>StopLimitPercent is a this is a part of the current deal price, from which the limit is set, 0.015 means 1.5%.</p>
+>
+><p>TradeAmount is a volume of trade, example: 5 means 5 usdt in "ETH_USDT"</p>
+>
+><p>TradeTimeout is a reload duration of trader</p>
+>
 
 ### 2 stage - change exmo-trader.go
 
@@ -87,11 +100,16 @@
     CandlesVolume : 250
     DataHandlerTimeout : 60
 
-<p>Symbol examples : "ETH_USDT", "BTC_ETH".</p>
-<p>Resolution means duration of single candle, 5 means 5 minute candles.</p>
-<p>CandlesFile is a file of candles.</p>
-<p>CandlesFileVolume is a volume of candles in CandlesFile.</p>
-<p>DataHandlerTimeout is a is a reload duration of datahandler.</p>
+><p>Symbol examples : "ETH_USDT", "BTC_ETH".</p>
+>
+><p>Resolution means duration of single candle, 5 means 5 minute candles.</p>
+>
+><p>CandlesFile is a file of candles.</p>
+>
+><p>CandlesFileVolume is a volume of candles in CandlesFile.</p>
+>
+><p>DataHandlerTimeout is a is a reload duration of datahandler.</p>
+>
 
 ### 2 stage - change exmo-trader.go
 
