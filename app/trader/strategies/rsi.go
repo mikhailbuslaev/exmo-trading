@@ -12,13 +12,13 @@ type RSI struct { // rsi strategy gives long or short signals when rsi index goe
 	Period            int
 }
 
-func (rsi *RSItrader) Set(candlesFile string, candlesFileVolume int) {
+func (rsi *RSI) Set(candlesFile string, candlesFileVolume int) {
 	rsi.Period = 14
 	rsi.CandlesFile = candlesFile
 	rsi.CandlesFileVolume = candlesFileVolume
 }
 
-func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) string {
+func (rsi *RSI) Solve(c *data.Candles, avggain, avglose []float64) string {
 	length := len(avggain)
 	if length != 0 {
 		index := 100.0 - (100.0 / (1.0 + (avggain[length-1] / avglose[length-1])))
@@ -32,7 +32,7 @@ func (rsi *RSItrader) Solve(c *data.Candles, avggain, avglose []float64) string 
 	return signals.NoSignals
 }
 
-func (rsi *RSItrader) Analyze() (string, error) {
+func (rsi *RSI) Analyze() (string, error) {
 	candles := &data.Candles{}
 	candles.Array = make([]data.Candle, 0, rsi.CandlesFileVolume)
 	err := candles.Read(rsi.CandlesFile)
