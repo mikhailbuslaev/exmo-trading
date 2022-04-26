@@ -13,7 +13,8 @@
 
 <p>you need to have installed docker.</p>
 
-    docker run -it exmo-trading
+    docker pull mbesl/exmo-trading:latest
+    docker run -it mbesl/exmo-trading
 
 ## run
 
